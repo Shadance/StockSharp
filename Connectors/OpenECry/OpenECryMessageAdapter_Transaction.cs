@@ -61,6 +61,22 @@ namespace StockSharp.OpenECry
 			draft.Comments = message.Comment;
 			draft.Account = _client.Accounts[message.PortfolioName];
 			draft.Contract = _client.Contracts[message.SecurityId.SecurityCode];
+
+			if (draft.Contract == null)
+			{
+				ContractAction(message.SecurityId, 
+					() => { ProcessOrderRegister(message); },
+					() =>
+					{
+						var execMsg = message.ToExecutionMessage();
+						execMsg.Error = new InvalidOperationException($"Contract '{message.SecurityId.SecurityCode}' not found.");
+						execMsg.OrderState = OrderStates.Failed;
+						SendOutMessage(execMsg);
+					});
+
+				return;
+			}
+
 			draft.Route = _client.Routes[message.SecurityId.BoardCode];
 			draft.Side = message.Side.ToOec();
 			draft.Quantity = (int)message.Volume;
@@ -205,6 +221,11 @@ namespace StockSharp.OpenECry
 			if (position == null)
 				throw new ArgumentNullException(nameof(position));
 
+			var realized = position.CurrencyNetGain.ToDecimal();
+			var unrealized = position.CurrencyOTE.ToDecimal();
+			var vm = realized + unrealized;
+			var posPrice = position.Net.Price.ToDecimal();
+
 			SendOutMessage(this
 				.CreatePositionChangeMessage(
 					position.Account.Name,
@@ -215,13 +236,13 @@ namespace StockSharp.OpenECry
 					}
 				)
 			.TryAdd(PositionChangeTypes.BeginValue, (decimal)position.Prev.Volume)
-			.TryAdd(PositionChangeTypes.CurrentValue, position.ContractSize.ToDecimal())
-			.TryAdd(PositionChangeTypes.CurrentPrice, position.CurrencyCostBasis.ToDecimal())
-			.TryAdd(PositionChangeTypes.RealizedPnL, position.CurrencyNetGain.ToDecimal())
-			.TryAdd(PositionChangeTypes.UnrealizedPnL, position.CurrencyOTE.ToDecimal())
+			.TryAdd(PositionChangeTypes.CurrentValue, (decimal)position.Net.Volume)
+			.TryAdd(PositionChangeTypes.CurrentPrice, posPrice)
+			.TryAdd(PositionChangeTypes.RealizedPnL, realized)
+			.TryAdd(PositionChangeTypes.UnrealizedPnL, unrealized)
 			.TryAdd(PositionChangeTypes.Commission, position.OpenCommissions.ToDecimal() + position.RealizedCommissions.ToDecimal())
-			.TryAdd(PositionChangeTypes.VariationMargin, position.InitialMargin.ToDecimal())
-			.TryAdd(PositionChangeTypes.AveragePrice, position.Net.Price.ToDecimal()));
+			.TryAdd(PositionChangeTypes.VariationMargin, vm)
+			.TryAdd(PositionChangeTypes.AveragePrice, posPrice));
 		}
 
 		private void SessionOnAllocationBlocksChanged(AllocationBlockList allocations)
