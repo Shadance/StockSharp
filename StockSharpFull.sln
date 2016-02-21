@@ -355,6 +355,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rithmic", "Connectors\Rithm
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Designer", "Designer", "{25A2C420-3794-4307-8A32-12C83E59E5E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xaml.Ribbon", "WpfApplication1\Xaml.Ribbon.csproj", "{FA11EDE4-C73D-4AD0-8FAD-818D58E078AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -855,6 +857,10 @@ Global
 		{FFBC7740-0D2B-49BA-8F95-59E4FC915D06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFBC7740-0D2B-49BA-8F95-59E4FC915D06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFBC7740-0D2B-49BA-8F95-59E4FC915D06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA11EDE4-C73D-4AD0-8FAD-818D58E078AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA11EDE4-C73D-4AD0-8FAD-818D58E078AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA11EDE4-C73D-4AD0-8FAD-818D58E078AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA11EDE4-C73D-4AD0-8FAD-818D58E078AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

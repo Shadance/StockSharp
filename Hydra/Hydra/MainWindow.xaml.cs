@@ -13,6 +13,9 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
+using System.Collections;
+
 namespace StockSharp.Hydra
 {
 	using System;
@@ -31,7 +34,7 @@ namespace StockSharp.Hydra
 	using System.Windows.Threading;
 	using Timer = System.Timers.Timer;
 
-	using ActiproSoftware.Windows.Controls.Docking;
+	//using ActiproSoftware.Windows.Controls.Docking;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -155,9 +158,9 @@ namespace StockSharp.Hydra
 		{
 			get
 			{
-				var wnd = DockSite.ActiveWindow as PaneWindow;
-
-				if (wnd == null)
+                //                var wnd = DockSite.ActiveWindow as PaneWindow;
+			    var wnd = DockSite.Children.OfType<PaneWindow>().FirstOr(null);
+                if (wnd == null)
 					return null;
 
 				var taskPane = wnd.Pane as TaskPane;
@@ -679,8 +682,9 @@ namespace StockSharp.Hydra
 		{
 			ResetLogsImages();
 
-			LogToolWindow.Activate();
-			Logs.IsOpen = false;
+//            LogToolWindow.Activate();
+            LogToolWindow.IsExpanded = true;
+            Logs.IsOpen = false;
 		}
 
 		private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
@@ -774,7 +778,7 @@ namespace StockSharp.Hydra
 					break;
 
 				case "task":
-					var task = (IHydraTask)(NavigationBar.SelectedPane == SourcesPane ? CurrentSources.SelectedItem : CurrentTools.SelectedItem);
+					var task = (IHydraTask)(NavigationBar.SelectedContent == SourcesPane ? CurrentSources.SelectedItem : CurrentTools.SelectedItem);
 
 					if (task != null)
 						pane = EnsureTaskPane(task);
@@ -786,7 +790,8 @@ namespace StockSharp.Hydra
 					break;
 					
 				case "security":
-					var wnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+//                    var wnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+                    var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 					{
 						var paneWnd = w as PaneWindow;
 
@@ -796,11 +801,12 @@ namespace StockSharp.Hydra
 						return paneWnd.Pane is AllSecuritiesPane;
 					});
 
-					if (wnd != null)
-						wnd.Activate();
-					else
+			        if (wnd != null)
+			        {
+                        wnd.IsActive = true;
+                    }
+                    else
 						pane = new AllSecuritiesPane();
-
 					break;
 			}
 
@@ -858,7 +864,7 @@ namespace StockSharp.Hydra
 					throw new ArgumentOutOfRangeException(nameof(e), param, LocalizedStrings.Str1655);
 			}
 
-			var importWnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+			var importWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 			{
 				var pw = w as PaneWindow;
 
@@ -873,10 +879,11 @@ namespace StockSharp.Hydra
 				return importPane.DataType == dataType && importPane.ExecutionType == execType;
 			});
 
-			if (importWnd != null)
-				importWnd.Activate();
-			else
-				ShowPane(new ImportPane { ExecutionType = execType, DataType = dataType });
+		    if (importWnd != null)
+		        importWnd.IsActive = true;
+
+		    else
+		        ShowPane(new ImportPane {ExecutionType = execType, DataType = dataType});
 		}
 
 		private void ResetSettings_Click(object sender, RoutedEventArgs e)
@@ -943,7 +950,7 @@ namespace StockSharp.Hydra
 
 		private void ExecutedBoardsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var wnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+			var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 			{
 				var paneWnd = w as PaneWindow;
 
@@ -954,7 +961,7 @@ namespace StockSharp.Hydra
 			});
 
 			if (wnd != null)
-				wnd.Activate();
+				wnd.IsActive = true;
 			else
 				ShowPane(new ExchangeBoardPane());
 		}
@@ -970,8 +977,8 @@ namespace StockSharp.Hydra
 				throw new ArgumentNullException(nameof(pane));
 
 			var wnd = new PaneWindow { Pane = pane };
-			DockSite.DocumentWindows.Add(wnd);
-			wnd.Activate();
+            DockSite.Children.Add(wnd);
+			wnd.IsActive = true;
 		}
 
 		private void ExecutedMemoryStatisticsCommand(object sender, ExecutedRoutedEventArgs e)
@@ -1027,7 +1034,7 @@ namespace StockSharp.Hydra
 		{
 		}
 
-		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
+/*		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
 		{
 			var paneWnd = e.Window as PaneWindow;
 
@@ -1056,10 +1063,10 @@ namespace StockSharp.Hydra
 			if (e.Window.Name == "LogToolWindow")
 				return;
 
-			DockSite.DocumentWindows.Remove((DocumentWindow)e.Window);
-		}
+			DockSite.Children.Remove((DocumentWindow)e.Window);
+		}*/
 
-		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
+/*		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
 		{
 			var wnd = e.Window as PaneWindow;
 
@@ -1078,7 +1085,7 @@ namespace StockSharp.Hydra
 			lv.ScrollIntoView(task);
 			lv.SelectedItem = task;
 		}
-
+*/
 		private void ProxySettings_Click(object sender, RoutedEventArgs e)
 		{
 			BaseApplication.EditProxySettigs();

@@ -13,6 +13,9 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
+using Ecng.Collections;
+
 namespace StockSharp.Hydra
 {
 	using System;
@@ -34,7 +37,7 @@ namespace StockSharp.Hydra
 	using StockSharp.Hydra.Core;
 	using StockSharp.Xaml;
 
-	using ActiproSoftware.Windows.Controls.Docking.Serialization;
+	//using ActiproSoftware.Windows.Controls.Docking.Serialization;
 
 	class UserConfig : BaseLogReceiver
 	{
@@ -54,12 +57,12 @@ namespace StockSharp.Hydra
 
 		private static MainWindow MainWindow => MainWindow.Instance;
 
-		private static DockSiteLayoutSerializer LayoutSerializer => new DockSiteLayoutSerializer
+		/*private static DockSiteLayoutSerializer LayoutSerializer => new DockSiteLayoutSerializer
 		{
 			SerializationBehavior = DockSiteSerializationBehavior.All,
 			DocumentWindowDeserializationBehavior = DockingWindowDeserializationBehavior.AutoCreate,
 			ToolWindowDeserializationBehavior = DockingWindowDeserializationBehavior.LazyLoad
-		};
+		};*/
 
 		static UserConfig()
 		{
@@ -121,8 +124,8 @@ namespace StockSharp.Hydra
 
 					var navBar = new SettingsStorage();
 
-					navBar.SetValue("IsMinimized", MainWindow.NavigationBar.IsMinimized);
-					navBar.SetValue("Width", MainWindow.NavigationBar.ContentWidth);
+					navBar.SetValue("IsMinimized", !MainWindow.ToolsNavigation.IsExpanded);
+					navBar.SetValue("Width", MainWindow.ToolsNavigation.Width);
 					navBar.SetValue("SelectedPane", MainWindow.NavigationBar.SelectedIndex);
 					navBar.SetValue("SelectedSource", MainWindow.CurrentSources.SelectedIndex);
 					navBar.SetValue("SelectedTool", MainWindow.CurrentTools.SelectedIndex);
@@ -131,7 +134,7 @@ namespace StockSharp.Hydra
 
 					var panes = new List<SettingsStorage>();
 
-					foreach (var paneWnd in MainWindow.DockSite.DocumentWindows.OfType<PaneWindow>())
+					foreach (var paneWnd in MainWindow.DockSite.Children.OfType<PaneWindow>())
 					{
 						var pane = paneWnd.Pane;
 
@@ -139,7 +142,7 @@ namespace StockSharp.Hydra
 							continue;
 
 						var settings = pane.SaveEntire(false);
-						settings.SetValue("isActive", MainWindow.DockSite.ActiveWindow == paneWnd);
+						settings.SetValue("isActive", paneWnd.IsActive);
 						panes.Add(settings);
 					}
 
@@ -147,13 +150,13 @@ namespace StockSharp.Hydra
 
 					new XmlSerializer<SettingsStorage>().Serialize(root, _configFile);
 
-					if (MainWindow.DockSite != null)
+/*					if (MainWindow.DockSite != null)
 					{
 						var stream = new MemoryStream();
 						LayoutSerializer.SaveToStream(stream, MainWindow.DockSite);
 						stream.Position = 0;
 						stream.Save(_layoutFile);
-					}
+					}*/
 				});
 			}
 			catch (Exception ex)
@@ -186,8 +189,8 @@ namespace StockSharp.Hydra
 				MainWindow.WindowState = wnd.GetValue<WindowState>("WindowState");
 
 				var navBar = _settings.GetValue<SettingsStorage>("navBar");
-				MainWindow.NavigationBar.IsMinimized = navBar.GetValue<bool>("IsMinimized");
-				MainWindow.NavigationBar.ContentWidth = navBar.GetValue<double>("Width");
+				MainWindow.ToolsNavigation.IsExpanded = !navBar.GetValue<bool>("IsMinimized");
+				MainWindow.NavigationBar.Width = navBar.GetValue<double>("Width");
 				MainWindow.NavigationBar.SelectedIndex = navBar.GetValue<int>("SelectedPane");
 			}
 			catch (Exception ex)
@@ -200,8 +203,8 @@ namespace StockSharp.Hydra
 		{
 			try
 			{
-				if (File.Exists(_layoutFile))
-					CultureInfo.InvariantCulture.DoInCulture(() => LayoutSerializer.LoadFromFile(_layoutFile, MainWindow.DockSite));
+//				if (File.Exists(_layoutFile))
+//					CultureInfo.InvariantCulture.DoInCulture(() => LayoutSerializer.LoadFromFile(_layoutFile, MainWindow.DockSite));
 
 				if (_settings == null)
 					return;
@@ -211,7 +214,7 @@ namespace StockSharp.Hydra
 				MainWindow.CurrentTools.SelectedIndex = navBar.GetValue<int?>("SelectedTool") ?? navBar.GetValue<int>("SelectedConverter");
 
 				var panes = _settings.GetValue<IEnumerable<SettingsStorage>>("panes").ToArray();
-				var wnds = MainWindow.DockSite.DocumentWindows.OfType<PaneWindow>().ToArray();
+				var wnds = MainWindow.DockSite.Children.OfType<PaneWindow>().ToArray();
 
 				// почему-то после загрузки разметки устанавливается в MainWindow
 				wnds.ForEach(w => w.DataContext = null);
@@ -245,7 +248,7 @@ namespace StockSharp.Hydra
 				wnds.Where(w => w.Pane == null).ForEach(w => w.Close());
 
 				if (activeWnd != null)
-					activeWnd.Activate();
+					activeWnd.IsActive = true;
 			}
 			catch (Exception ex)
 			{

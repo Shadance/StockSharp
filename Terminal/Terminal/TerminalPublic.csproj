@@ -228,9 +228,9 @@
       <Project>{DCE69DB8-53CA-4B7F-9368-02F175A31074}</Project>
       <Name>BusinessEntities</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Configuration\Configuration.csproj">
+    <ProjectReference Include="..\..\Configuration\ConfigurationPublic.csproj">
       <Project>{2cff1903-4ef5-46f8-ab5d-bb623ca75ce6}</Project>
-      <Name>Configuration</Name>
+      <Name>ConfigurationPublic</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Connectors\InteractiveBrokers\InteractiveBrokers.csproj">
       <Project>{F17D780E-6F82-40FD-84E1-C4EB09853BBD}</Project>

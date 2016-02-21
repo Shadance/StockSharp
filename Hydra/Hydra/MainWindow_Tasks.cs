@@ -316,7 +316,7 @@ namespace StockSharp.Hydra
 				{
 					if (res)
 					{
-						var wnd = DockSite.DocumentWindows
+						var wnd = DockSite.Children
 							.OfType<PaneWindow>()
 							.Where(w => w.Pane is TaskPane)
 							.FirstOrDefault(w => ((TaskPane)w.Pane).Task == task);
@@ -481,7 +481,7 @@ namespace StockSharp.Hydra
 
 		private TaskPane EnsureTaskPane(IHydraTask task)
 		{
-			var taskWnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+			var taskWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 			{
 				var pw = w as PaneWindow;
 
@@ -498,7 +498,7 @@ namespace StockSharp.Hydra
 
 			if (taskWnd != null)
 			{
-				taskWnd.Activate();
+				taskWnd.IsActive = true;
 				return null;
 			}
 			else
@@ -690,10 +690,10 @@ namespace StockSharp.Hydra
 		{
 			var item = ((ListView)sender).SelectedItem;
 
-			var wnd = DockSite.DocumentWindows.SingleOrDefault(w => w.DataContext == item);
+			var wnd = DockSite.Children.OfType<PaneWindow>().SingleOrDefault(w => w.DataContext == item);
 
 			if (wnd != null)
-				wnd.Activate();
+				wnd.IsActive = true;
 		}
 
 		private void CurrentTasks_OnSelectionItemDoubleClick(object sender, MouseButtonEventArgs e)
