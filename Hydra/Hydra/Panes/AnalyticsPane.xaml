@@ -60,7 +60,7 @@
 
         <TabControl x:Name="DockSite">
             <TabItem Header="{x:Static loc:LocalizedStrings.XamlStr661}">
-                <sx:CodePanel x:Name="CodePanel" CompilingCode="CodePanel_OnCompilingCode" />
+                <local:CodePanel x:Name="CodePanel" CompilingCode="CodePanel_OnCompilingCode" />
             </TabItem>
             <TabItem x:Name="ChartPanel" Header="{x:Static loc:LocalizedStrings.Str3200}">
             </TabItem>

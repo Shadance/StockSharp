@@ -124,9 +124,6 @@ namespace StockSharp.Hydra
 
 					var navBar = new SettingsStorage();
 
-					navBar.SetValue("IsMinimized", !MainWindow.ToolsNavigation.IsExpanded);
-					navBar.SetValue("Width", MainWindow.ToolsNavigation.Width);
-					navBar.SetValue("SelectedPane", MainWindow.NavigationBar.SelectedIndex);
 					navBar.SetValue("SelectedSource", MainWindow.CurrentSources.SelectedIndex);
 					navBar.SetValue("SelectedTool", MainWindow.CurrentTools.SelectedIndex);
 
@@ -189,9 +186,6 @@ namespace StockSharp.Hydra
 				MainWindow.WindowState = wnd.GetValue<WindowState>("WindowState");
 
 				var navBar = _settings.GetValue<SettingsStorage>("navBar");
-				MainWindow.ToolsNavigation.IsExpanded = !navBar.GetValue<bool>("IsMinimized");
-				MainWindow.NavigationBar.Width = navBar.GetValue<double>("Width");
-				MainWindow.NavigationBar.SelectedIndex = navBar.GetValue<int>("SelectedPane");
 			}
 			catch (Exception ex)
 			{
@@ -217,7 +211,7 @@ namespace StockSharp.Hydra
 				var wnds = MainWindow.DockSite.Children.OfType<PaneWindow>().ToArray();
 
 				// почему-то после загрузки разметки устанавливается в MainWindow
-				wnds.ForEach(w => w.DataContext = null);
+				wnds.ForEach(w => w.Pane = null);
 
 				var len = wnds.Length.Min(panes.Length);
 

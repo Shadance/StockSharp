@@ -54,7 +54,18 @@ namespace StockSharp.Hydra
 
 			public LanguageSorter()
 			{
-				_language = Thread.CurrentThread.CurrentCulture.Name == "en-US" ? Languages.English : Languages.Russian;
+			    switch (Thread.CurrentThread.CurrentCulture.Name)
+			    {
+                    case "ru-RU":
+                        _language = Languages.Russian;
+			            break;
+                    case "en-US":
+                        _language = Languages.English;
+                        break;
+                    default:
+                        _language = Languages.English;
+                        break;
+                }
 			}
 
 			public int Compare(object x, object y)
@@ -174,7 +185,7 @@ namespace StockSharp.Hydra
 						GuiDispatcher.GlobalDispatcher.AddSyncAction(() => BusyIndicator.BusyContent = LocalizedStrings.Str2904Params.Put(title));
 						var newTask = task.CreateInstance<IHydraTask>();
 						InitTask(newTask, settings);
-						tasks.Add(newTask);
+                        tasks.Add(newTask);
 					}
 					catch (Exception ex)
 					{
@@ -458,9 +469,6 @@ namespace StockSharp.Hydra
 					if (first != null)
 					{
 						var isTool = first.IsCategoryOf(TaskCategories.Tool);
-
-						NavigationBar.SelectedIndex = isTool ? 1 : 0;
-
 						var listView = isTool ? CurrentTools : CurrentSources;
 
 						listView.SelectedItem = first;
@@ -690,7 +698,7 @@ namespace StockSharp.Hydra
 		{
 			var item = ((ListView)sender).SelectedItem;
 
-			var wnd = DockSite.Children.OfType<PaneWindow>().SingleOrDefault(w => w.DataContext == item);
+			var wnd = DockSite.Children.OfType<PaneWindow>().SingleOrDefault(w => w.Pane == item);
 
 			if (wnd != null)
 				wnd.IsActive = true;

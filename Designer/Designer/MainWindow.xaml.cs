@@ -25,13 +25,6 @@ namespace StockSharp.Designer
 	using System.Windows.Input;
 	using System.Windows.Media.Imaging;
 
-	using DevExpress.Xpf.Core;
-	using DevExpress.Xpf.Docking;
-	using DevExpress.Xpf.Docking.Base;
-	using DevExpress.Xpf.Editors.Helpers;
-	using DevExpress.Xpf.Editors.Internal;
-	using DevExpress.Xpf.Editors.Popups;
-	using DevExpress.Xpf.Editors.Settings;
 
 	using Ecng.Collections;
 	using Ecng.Common;

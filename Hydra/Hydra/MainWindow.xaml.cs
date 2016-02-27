@@ -15,6 +15,8 @@ Copyright 2010 by StockSharp, LLC
 #endregion S# License
 
 using System.Collections;
+using System.Windows.Media;
+using Fluent;
 
 namespace StockSharp.Hydra
 {
@@ -62,7 +64,7 @@ namespace StockSharp.Hydra
 	using StockSharp.Hydra.Core;
 	using StockSharp.Localization;
 
-	public partial class MainWindow : ILogListener
+	public partial class MainWindow : RibbonWindow, ILogListener
 	{
 		public readonly static RoutedCommand OpenLogCommand = new RoutedCommand();
 		public readonly static RoutedCommand TargetPlatformCommand = new RoutedCommand();
@@ -153,27 +155,25 @@ namespace StockSharp.Hydra
 
 		private bool _isReseting;
 		private string _dbFile;
-
-		private Security SelectedSecurity
-		{
-			get
-			{
+        private Security SelectedSecurity
+        {
+            get
+            {
                 //                var wnd = DockSite.ActiveWindow as PaneWindow;
-			    var wnd = DockSite.Children.OfType<PaneWindow>().FirstOr(null);
+                var wnd = DockSite.Children.OfType<PaneWindow>().FirstOr(null);
                 if (wnd == null)
-					return null;
+                    return null;
 
-				var taskPane = wnd.Pane as TaskPane;
+                var taskPane = wnd.Pane as TaskPane;
 
-				if (taskPane == null)
-					return null;
+                if (taskPane == null)
+                    return null;
 
-				var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
-				return selectedSecurity == null ? null : selectedSecurity.TaskSecurity.Security;
-			}
-		}
-
-		public WindowState CurrentWindowState { get; set; }
+                var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
+                return selectedSecurity == null ? null : selectedSecurity.TaskSecurity.Security;
+            }
+        }
+        public WindowState CurrentWindowState { get; set; }
 
 		#region Dependency properties
 
@@ -224,7 +224,7 @@ namespace StockSharp.Hydra
 			AutomaticUpdater.MenuItem = MnuCheckForUpdates;
 			AutomaticUpdater.Translate();
 
-			//DockSite.DocumentWindows.CollectionChanged += DocumentWindows_OnCollectionChanged;
+//			DockSite.Children.CollectionChanged += DocumentWindows_OnCollectionChanged;
 
 			_logManager.Sources.Add(UserConfig.Instance);
 
@@ -277,15 +277,22 @@ namespace StockSharp.Hydra
 					return;
 				}
 
-				Tasks.AddRange(res.Result);
+                try
+                {
+                    Tasks.AddRange(res.Result);
+                }
+                catch (Exception ex)
+                {
+                    ex.LogError();
+                }
 
-				var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
-				if (collectionView != null)
+                var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
+/*				if (collectionView != null)
 				{
 					var view = (ListCollectionView)collectionView.View;
 					view.CustomSort = new LanguageSorter();
 				}
-
+*/
 				HydraEntityRegistry = _entityRegistry;
 
 				var settings = _entityRegistry.Settings;
@@ -329,15 +336,6 @@ namespace StockSharp.Hydra
 						AddTasks(newTasks);
 				}
 			}, TaskScheduler.FromCurrentSynchronizationContext());
-
-			try
-			{
-				AdvertisePanel.Client = new NotificationClient();
-			}
-			catch (Exception ex)
-			{
-				ex.LogError();
-			}
 		}
 
 		private void InitializeDataSource()
@@ -662,9 +660,6 @@ namespace StockSharp.Hydra
 
 		private void ResetLogsImages()
 		{
-			LogErrorImg.Visibility = Visibility.Collapsed;
-			WarnErrorImg.Visibility = Visibility.Collapsed;
-
 			LastWarnError.Visibility = Visibility.Collapsed;
 			LastLogError.Visibility = Visibility.Collapsed;
 			LastLogMessage = string.Empty;
@@ -681,13 +676,11 @@ namespace StockSharp.Hydra
 		private void ExecutedOpenLogCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			ResetLogsImages();
+		    LogToolWindow.IsActive = true;
+            LogToolWindow.IsSelected = true;
+        }
 
-//            LogToolWindow.Activate();
-            LogToolWindow.IsExpanded = true;
-            Logs.IsOpen = false;
-		}
-
-		private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
+        private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			Process.Start("http://stocksharp.com/doc/html/a720a275-440a-44ce-86e2-bcec2e0bc55f.htm");
 		}
@@ -750,7 +743,6 @@ namespace StockSharp.Hydra
 		private void ExecutedOpenPaneCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			IPane pane = null;
-
 			switch (e.Parameter.ToString().ToLowerInvariant())
 			{
 				case "trade":
@@ -777,13 +769,25 @@ namespace StockSharp.Hydra
 					pane = new NewsPane();
 					break;
 
-				case "task":
-					var task = (IHydraTask)(NavigationBar.SelectedContent == SourcesPane ? CurrentSources.SelectedItem : CurrentTools.SelectedItem);
+                case "selected_task":
+                    var task = CurrentTools.SelectedItem;
+			        if (task != null)
+			        {
+			            if (task.GetType() != typeof (IHydraTask))
+			                throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
+			            pane = EnsureTaskPane((IHydraTask) task);
+			        }
+			        break;
 
-					if (task != null)
-						pane = EnsureTaskPane(task);
-
-					break;
+                case "selected_source":
+                    task = CurrentSources.SelectedItem;
+			        if (task != null)
+			        {
+                        if (task.GetType() != typeof(IHydraTask))
+                            throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
+                        pane = EnsureTaskPane((IHydraTask) task);
+			        }
+			        break;
 
 				case "transaction":
 					pane = new TransactionsPane { SelectedSecurity = SelectedSecurity };
@@ -999,7 +1003,6 @@ namespace StockSharp.Hydra
 					{
 						GuiDispatcher.GlobalDispatcher.AddAction(() =>
 						{
-							LogErrorImg.Visibility = Visibility.Visible;
 							LastWarnError.Visibility = Visibility.Collapsed;
 							LastLogError.Visibility = Visibility.Visible;
 						});
@@ -1010,7 +1013,6 @@ namespace StockSharp.Hydra
 					{
 						GuiDispatcher.GlobalDispatcher.AddAction(() =>
 						{
-							WarnErrorImg.Visibility = Visibility.Visible;
 							LastWarnError.Visibility = Visibility.Visible;
 							LastLogError.Visibility = Visibility.Collapsed;
 						});
@@ -1093,6 +1095,21 @@ namespace StockSharp.Hydra
 
 		void IDisposable.Dispose()
 		{
+            _emailListener.Dispose();
+
 		}
-	}
+
+ /*       private void CurrentTasks_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
+        }
+*/
+
+        private void ZoomSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            var textFormattingMode = e.NewValue > 1.0 || Math.Abs(e.NewValue - 1.0) < double.Epsilon ? TextFormattingMode.Ideal : TextFormattingMode.Display;
+            TextOptions.SetTextFormattingMode(this, textFormattingMode);
+        }
+
+    }
 }
