@@ -49,6 +49,14 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\References\DevExpress\DevExpress.Xpf.Docking.v15.2.dll</HintPath>
     </Reference>
+    <Reference Include="DevExpress.Xpf.Grid.v15.2, Version=15.2.5.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\References\DevExpress\DevExpress.Xpf.Grid.v15.2.dll</HintPath>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Grid.v15.2.Core, Version=15.2.5.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\References\DevExpress\DevExpress.Xpf.Grid.v15.2.Core.dll</HintPath>
+    </Reference>
     <Reference Include="DevExpress.Xpf.Ribbon.v15.2, Version=15.2.5.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\References\DevExpress\DevExpress.Xpf.Ribbon.v15.2.dll</HintPath>
@@ -100,12 +108,6 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="Xceed.Wpf.AvalonDock">
-      <HintPath>..\..\References\Ecng\Xceed.Wpf.AvalonDock.dll</HintPath>
-    </Reference>
-    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro">
-      <HintPath>..\..\References\Ecng\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
-    </Reference>
     <Reference Include="Xceed.Wpf.Toolkit">
       <HintPath>..\..\References\Ecng\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
@@ -126,6 +128,7 @@
     <Compile Include="EmulationDiagramStrategy.cs" />
     <Compile Include="EmulationSettings.cs" />
     <Compile Include="Layout\LayoutManager.cs" />
+    <Compile Include="MarketDataSettingsEdit.cs" />
     <Compile Include="MarketDataSettingsEditor.cs" />
     <Compile Include="SolutionExplorerControl.xaml.cs">
       <DependentUpon>SolutionExplorerControl.xaml</DependentUpon>
@@ -264,9 +267,6 @@
     <None Include="Compositions\bf591486_88ac_41b2_8079_ca0c9eabf349.xml" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\FolderClosed.png" />
-    <Resource Include="Images\FolderOpen.png" />
-    <Resource Include="Images\FolderSelected.png" />
     <Resource Include="Images\start_32x32.png" />
     <Resource Include="Images\stop_32x32.png" />
     <Resource Include="Images\terminal_32x32.png" />
@@ -299,6 +299,11 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Security_32x32.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\TreeComposition_32x32.png" />
+    <Resource Include="Images\TreeFolder_32x32.png" />
+    <Resource Include="Images\TreeStrategy_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

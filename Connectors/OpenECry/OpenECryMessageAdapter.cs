@@ -13,12 +13,11 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
-
 namespace StockSharp.OpenECry
 {
 	using System;
-	using System.Timers;
 	using System.Security;
+	using System.Threading;
 
 	using Ecng.Common;
 
@@ -32,24 +31,52 @@ namespace StockSharp.OpenECry
 
 	public partial class OpenECryMessageAdapter : MessageAdapter
 	{
-		private class InPlaceThreadPolicy : ThreadingPolicy
+		private class MarshallingMessage : Message
 		{
-			void IDisposable.Dispose()
+			private readonly APIAction _action;
+
+			public const MessageTypes Marshalling = (MessageTypes)(-1000);
+
+			public MarshallingMessage(APIAction action)
+				: base(Marshalling)
 			{
+				if (action == null)
+					throw new ArgumentNullException(nameof(action));
+
+				_action = action;
+			}
+
+			public void Activate()
+			{
+				_action();
+			}
+		}
+
+		private class InPlaceThreadPolicy : Disposable, ThreadingPolicy
+		{
+			private readonly OpenECryMessageAdapter _adapter;
+			private readonly int _threadOwner;
+
+			public InPlaceThreadPolicy(OpenECryMessageAdapter adapter)
+			{
+				if (adapter == null)
+					throw new ArgumentNullException(nameof(adapter));
+
+				_adapter = adapter;
+				_threadOwner = Thread.CurrentThread.ManagedThreadId;
+			}
+
+			private EventHandler _timer;
+
+			public void InvokeTimer()
+			{
+				_timer?.Invoke(this, EventArgs.Empty);
 			}
 
 			object ThreadingPolicy.SetTimer(int timeout, EventHandler action)
 			{
-				var timer = new Timer
-				{
-					Interval = 100,
-					AutoReset = true,
-				};
-
-				timer.Elapsed += action.Invoke;
-				timer.Start();
-
-				return timer;
+				_timer = action;
+				return _timer;
 			}
 
 			void ThreadingPolicy.KillTimer(object timerObject)
@@ -59,12 +86,16 @@ namespace StockSharp.OpenECry
 
 			void ThreadingPolicy.Send(APIAction action)
 			{
-				action();
+				//action();
+				throw new NotSupportedException();
 			}
 
 			void ThreadingPolicy.Post(APIAction action)
 			{
-				action();
+				if (_threadOwner == Thread.CurrentThread.ManagedThreadId)
+					action();
+				else
+					_adapter.SendOutMessage(new MarshallingMessage(action) { IsBack = true });
 			}
 		}
 
@@ -114,6 +145,7 @@ namespace StockSharp.OpenECry
 		}
 
 		private OECClient _client;
+		private InPlaceThreadPolicy _threadPolicy;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OpenECryMessageAdapter"/>.
@@ -126,6 +158,8 @@ namespace StockSharp.OpenECry
 			this.AddTransactionalSupport();
 
 			Uuid = DefaultUuid;
+
+			HeartbeatInterval = TimeSpan.FromMilliseconds(10);
 		}
 
 		/// <summary>
@@ -163,7 +197,9 @@ namespace StockSharp.OpenECry
 			});
 
 			DisposeClient();
+
 			_client = null;
+			_threadPolicy = null;
 		}
 
 		private void SessionOnError(Exception exception)
@@ -179,7 +215,6 @@ namespace StockSharp.OpenECry
 
 		private void SessionOnBeginEvents()
 		{
-
 		}
 
 		private void SessionOnEndEvents()
@@ -205,7 +240,7 @@ namespace StockSharp.OpenECry
 
 		private void SubscribeClient()
 		{
-			if(_isClientSubscribed)
+			if (_isClientSubscribed)
 				return;
 
 			_isClientSubscribed = true;
@@ -264,7 +299,7 @@ namespace StockSharp.OpenECry
 
 		private void UnsubscribeClient()
 		{
-			if(!_isClientSubscribed)
+			if (!_isClientSubscribed)
 				return;
 
 			_isClientSubscribed = false;
@@ -353,10 +388,24 @@ namespace StockSharp.OpenECry
 						}
 
 						_client = null;
+						_threadPolicy = null;
 					}
 
 					SendOutMessage(new ResetMessage());
 
+					break;
+				}
+
+				case MessageTypes.Time:
+				{
+					_threadPolicy?.InvokeTimer();
+					break;
+				}
+
+				case MarshallingMessage.Marshalling:
+				{
+					var msg = (MarshallingMessage)message;
+					msg.Activate();
 					break;
 				}
 
@@ -372,7 +421,9 @@ namespace StockSharp.OpenECry
 					{
 						case OpenECryRemoting.None:
 						case OpenECryRemoting.Primary:
-							_client = new OECClient(new InPlaceThreadPolicy())
+							_threadPolicy = new InPlaceThreadPolicy(this);
+							
+							_client = new OECClient
 							{
 								UUID = Uuid.To<string>(),
 								EventBatchInterval = 0,

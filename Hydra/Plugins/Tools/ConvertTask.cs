@@ -82,8 +82,6 @@ namespace StockSharp.Hydra.Tools
 			public ConvertTaskSettings(HydraTaskSettings settings)
 				: base(settings)
 			{
-				ExtensionInfo.TryAdd("DestinationStorageFormat", StorageFormats.Binary.To<string>());
-				ExtensionInfo.TryAdd("MarketDepthBuilder", OrderLogBuilders.Plaza2.To<string>());
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -92,8 +90,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(0)]
 			public ConvertModes ConvertMode
 			{
-				get { return ExtensionInfo["ConvertMode"].To<ConvertModes>(); }
-				set { ExtensionInfo["ConvertMode"] = value.To<string>(); }
+				get { return ExtensionInfo[nameof(ConvertMode)].To<ConvertModes>(); }
+				set { ExtensionInfo[nameof(ConvertMode)] = value.To<string>(); }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -103,8 +101,8 @@ namespace StockSharp.Hydra.Tools
 			[Ignore]
 			public StorageFormats DestinationStorageFormat
 			{
-				get { return ExtensionInfo["DestinationStorageFormat"].To<StorageFormats>(); }
-				set { ExtensionInfo["DestinationStorageFormat"] = value.To<string>(); }
+				get { return ExtensionInfo[nameof(DestinationStorageFormat)].To<StorageFormats>(); }
+				set { ExtensionInfo[nameof(DestinationStorageFormat)] = value.To<string>(); }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -113,8 +111,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(1)]
 			public DateTime StartFrom
 			{
-				get { return ExtensionInfo["StartFrom"].To<DateTime>(); }
-				set { ExtensionInfo["StartFrom"] = value.Ticks; }
+				get { return ExtensionInfo[nameof(StartFrom)].To<DateTime>(); }
+				set { ExtensionInfo[nameof(StartFrom)] = value.Ticks; }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -123,8 +121,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(2)]
 			public int Offset
 			{
-				get { return ExtensionInfo["Offset"].To<int>(); }
-				set { ExtensionInfo["Offset"] = value; }
+				get { return ExtensionInfo[nameof(Offset)].To<int>(); }
+				set { ExtensionInfo[nameof(Offset)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.CandlesKey)]
@@ -134,8 +132,8 @@ namespace StockSharp.Hydra.Tools
 			[Editor(typeof(CandleSettingsEditor), typeof(CandleSettingsEditor))]
 			public CandleSeries CandleSettings
 			{
-				get { return (CandleSeries)ExtensionInfo["CandleSettings"]; }
-				set { ExtensionInfo["CandleSettings"] = value; }
+				get { return (CandleSeries)ExtensionInfo[nameof(CandleSettings)]; }
+				set { ExtensionInfo[nameof(CandleSettings)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.MarketDepthsKey)]
@@ -144,8 +142,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(0)]
 			public TimeSpan MarketDepthInterval
 			{
-				get { return (TimeSpan)ExtensionInfo["MarketDepthInterval"]; }
-				set { ExtensionInfo["MarketDepthInterval"] = value; }
+				get { return (TimeSpan)ExtensionInfo[nameof(MarketDepthInterval)]; }
+				set { ExtensionInfo[nameof(MarketDepthInterval)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.MarketDepthsKey)]
@@ -154,8 +152,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(1)]
 			public int MarketDepthMaxDepth
 			{
-				get { return (int)ExtensionInfo["MarketDepthMaxDepth"]; }
-				set { ExtensionInfo["MarketDepthMaxDepth"] = value; }
+				get { return (int)ExtensionInfo[nameof(MarketDepthMaxDepth)]; }
+				set { ExtensionInfo[nameof(MarketDepthMaxDepth)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.MarketDepthsKey)]
@@ -164,8 +162,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(1)]
 			public OrderLogBuilders MarketDepthBuilder
 			{
-				get { return ExtensionInfo["MarketDepthBuilder"].To<OrderLogBuilders>(); }
-				set { ExtensionInfo["MarketDepthBuilder"] = value.To<string>(); }
+				get { return ExtensionInfo[nameof(MarketDepthBuilder)].To<OrderLogBuilders>(); }
+				set { ExtensionInfo[nameof(MarketDepthBuilder)] = value.To<string>(); }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -177,11 +175,11 @@ namespace StockSharp.Hydra.Tools
 			{
 				get
 				{
-					return DriveCache.Instance.GetDrive((string)ExtensionInfo.TryGetValue("DestinationDrive") ?? string.Empty);
+					return DriveCache.Instance.GetDrive((string)ExtensionInfo.TryGetValue(nameof(DestinationDrive)) ?? string.Empty);
 				}
 				set
 				{
-					ExtensionInfo["DestinationDrive"] = value?.Path;
+					ExtensionInfo[nameof(DestinationDrive)] = value?.Path;
 				}
 			}
 

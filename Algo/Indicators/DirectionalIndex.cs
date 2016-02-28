@@ -133,7 +133,7 @@ namespace StockSharp.Algo.Indicators
 		public override void Load(SettingsStorage settings)
 		{
 			base.Load(settings);
-			Length = settings.GetValue<int>("Length");
+			Length = settings.GetValue<int>(nameof(Length));
 		}
 
 		/// <summary>
@@ -143,7 +143,7 @@ namespace StockSharp.Algo.Indicators
 		public override void Save(SettingsStorage settings)
 		{
 			base.Save(settings);
-			settings.SetValue("Length", Length);
+			settings.SetValue(nameof(Length), Length);
 		}
 	}
 }

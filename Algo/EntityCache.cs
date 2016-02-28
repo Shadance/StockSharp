@@ -467,7 +467,7 @@ namespace StockSharp.Algo
 			{
 				o = (Order)data.Orders.TryGetValue(CreateOrderKey(message.OrderType, message.OriginalTransactionId, false));
 
-				if(o != null)
+				if (o != null)
 					orders.Add(Tuple.Create(o, false));
 			}
 

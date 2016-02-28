@@ -20,14 +20,16 @@ namespace StockSharp.Designer
 	using System.Collections.ObjectModel;
 	using System.ComponentModel;
 	using System.Windows;
-	using System.Windows.Controls;
 	using System.Windows.Input;
+	using System.Windows.Media;
+	using System.Windows.Media.Imaging;
+
+	using DevExpress.Xpf.Grid;
+	using DevExpress.Xpf.Grid.TreeList;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
-
-	using Hardcodet.Wpf.GenericTreeView;
 
 	using MoreLinq;
 
@@ -84,19 +86,6 @@ namespace StockSharp.Designer
 
 		#endregion
 
-		#region NodeContextMenu
-
-		public static readonly DependencyProperty NodeContextMenuProperty = DependencyProperty.Register("NodeContextMenu", typeof(ContextMenu),
-			typeof(SolutionExplorerControl), new PropertyMetadata(null));
-
-		public ContextMenu NodeContextMenu
-		{
-			get { return (ContextMenu)GetValue(NodeContextMenuProperty); }
-			set { SetValue(NodeContextMenuProperty, value); }
-		}
-
-		#endregion
-
 		private readonly SolutionExplorerItem _compositionsItem;
 		private readonly SolutionExplorerItem _strategiesItem;
 
@@ -110,7 +99,7 @@ namespace StockSharp.Designer
 
 			InitializeComponent();
 			
-			ExplorerTree.Items = new List<SolutionExplorerItem>
+			ExplorerTree.ItemsSource = new List<SolutionExplorerItem>
 			{
 				_compositionsItem,
 				_strategiesItem,
@@ -129,17 +118,18 @@ namespace StockSharp.Designer
 
 		private void ExplorerTree_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
-			var item = ExplorerTree.SelectedItem;
+			var item = (SolutionExplorerItem)ExplorerTree.SelectedItem;
 
 			if (item?.Element == null)
 				return;
 
 			Open.SafeInvoke(item.Element);
-        }
+		}
 
-		private void ExplorerTree_OnSelectedItemChanged(object sender, RoutedTreeItemEventArgs<SolutionExplorerItem> e)
+		private void ExplorerTree_OnSelectedItemChanged(object sender, SelectedItemChangedEventArgs e)
 		{
-			SelectedItem = ExplorerTree.SelectedItem?.Parent == null ? null : ExplorerTree.SelectedItem.Element;
+			var selectedItem = (SolutionExplorerItem)ExplorerTree.SelectedItem;
+            SelectedItem = selectedItem?.Parent == null ? null : selectedItem.Element;
 		}
 	}
 
@@ -150,8 +140,6 @@ namespace StockSharp.Designer
 		private string _tooltip;
 
 		public Guid Id { get; }
-
-		public string TextId { get; }
 
 		public string Name
 		{
@@ -187,7 +175,6 @@ namespace StockSharp.Designer
 				throw new ArgumentNullException(nameof(name));
 
 			Id = id;
-			TextId = id.ToString();
 			Name = name;
 			Tooltip = name;
 			Parent = parent;
@@ -278,21 +265,22 @@ namespace StockSharp.Designer
         }
 	}
 
-	public class SolutionExplorerTree : TreeViewBase<SolutionExplorerItem>
+	public class TreeNodeImageSelector : TreeListNodeImageSelector
 	{
-		public override string GetItemKey(SolutionExplorerItem item)
-		{
-			return item.TextId;
-		}
+		public ImageSource Folder { get; set; }
 
-		public override ICollection<SolutionExplorerItem> GetChildItems(SolutionExplorerItem item)
-		{
-			return item.ChildItems;
-		}
+		public ImageSource Composition { get; set; }
 
-		public override SolutionExplorerItem GetParentItem(SolutionExplorerItem item)
+		public ImageSource Strategy { get; set; }
+
+		public override ImageSource Select(TreeListRowData rowData)
 		{
-			return item.Parent;
+			var item = (SolutionExplorerItem)rowData.View.DataControl.GetRow(rowData.RowHandle.Value);
+
+			if (item.Parent == null)
+				return Folder;
+
+			return item.Element.Type == CompositionType.Composition ? Composition : Strategy;
 		}
 	}
 }

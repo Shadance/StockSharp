@@ -156,8 +156,7 @@ namespace StockSharp.Algo
 
 		private void AdapterOnNewOutMessage(Message message)
 		{
-			TryOpenChannel();
-			OutMessageChannel.SendInMessage(message);
+			OnProcessMessage(message);
 		}
 
 		/// <summary>
@@ -165,19 +164,40 @@ namespace StockSharp.Algo
 		/// </summary>
 		protected virtual bool RaiseConnectedOnFirstAdapter => true;
 
+		private IMessageChannel _outMessageChannel;
+
 		/// <summary>
 		/// Outgoing message channel.
 		/// </summary>
-		public IMessageChannel OutMessageChannel {get;}
+		public IMessageChannel OutMessageChannel
+		{
+			get { return _outMessageChannel; }
+			protected set
+			{
+				if (value == _outMessageChannel)
+					return;
+
+				_outMessageChannel?.Dispose();
+				_outMessageChannel = value;
+			}
+		}
+
+		private IMessageChannel _inMessageChannel;
 
 		/// <summary>
 		/// Input message channel.
 		/// </summary>
-		public IMessageChannel InMessageChannel {get;}
-
-		private void OutMessageChannelOnNewOutMessage(Message message)
+		public IMessageChannel InMessageChannel
 		{
-			OnProcessMessage(message);
+			get { return _inMessageChannel; }
+			protected set
+			{
+				if (value == _inMessageChannel)
+					return;
+
+				_inMessageChannel?.Dispose();
+				_inMessageChannel = value;
+			}
 		}
 
 		private IMessageAdapter _inAdapter;
@@ -203,14 +223,13 @@ namespace StockSharp.Algo
 					_adapter.InnerAdapters.Removed -= InnerAdaptersOnRemoved;
 					_adapter.InnerAdapters.Cleared -= InnerAdaptersOnCleared;
 
-					_inAdapter.NewOutMessage -= OutMessageChannelOnNewOutMessage;
-
 					SendInMessage(new ResetMessage());
 
+					_inAdapter.NewOutMessage -= AdapterOnNewOutMessage;
 					_inAdapter.Dispose();
 
-					if (_inAdapter != _adapter)
-						_adapter.Dispose();
+					//if (_inAdapter != _adapter)
+					//	_adapter.Dispose();
 				}
 
 				_adapter = value;
@@ -218,41 +237,37 @@ namespace StockSharp.Algo
 
 				if (_adapter != null)
 				{
-					_inAdapter = new ChannelMessageAdapter(_inAdapter, new PassThroughMessageChannel(), OutMessageChannel)
-					{
-						OwnOutputChannel = true
-					};
-
-					if (LatencyManager != null)
-						_inAdapter = new LatencyMessageAdapter(_inAdapter) { LatencyManager = LatencyManager };
-
-					if (SlippageManager != null)
-						_inAdapter = new SlippageMessageAdapter(_inAdapter) { SlippageManager = SlippageManager };
-
-					if (PnLManager != null)
-						_inAdapter = new PnLMessageAdapter(_inAdapter) { PnLManager = PnLManager };
-
-					if (CommissionManager != null)
-						_inAdapter = new CommissionMessageAdapter(_inAdapter) { CommissionManager = CommissionManager };
-
-					if (RiskManager != null)
-						_inAdapter = new RiskMessageAdapter(_inAdapter) { RiskManager = RiskManager };
-
-					if (_entityRegistry != null && _storageRegistry != null)
-						_inAdapter = StorageAdapter = new StorageMessageAdapter(_inAdapter, _entityRegistry, _storageRegistry);
-
-					_inAdapter = new ChannelMessageAdapter(_inAdapter, InMessageChannel, new PassThroughMessageChannel())
-					{
-						OwnInputChannel = true
-					};
-
-					_inAdapter.NewOutMessage += OutMessageChannelOnNewOutMessage;
-
 					_adapter.InnerAdapters.Added += InnerAdaptersOnAdded;
 					_adapter.InnerAdapters.Removed += InnerAdaptersOnRemoved;
 					_adapter.InnerAdapters.Cleared += InnerAdaptersOnCleared;
 
 					_adapter.Parent = this;
+
+					_inAdapter = new ChannelMessageAdapter(_inAdapter, InMessageChannel, OutMessageChannel)
+					{
+						//OwnOutputChannel = true,
+						OwnInnerAdaper = true
+					};
+
+					if (LatencyManager != null)
+						_inAdapter = new LatencyMessageAdapter(_inAdapter) { LatencyManager = LatencyManager, OwnInnerAdaper = true };
+
+					if (SlippageManager != null)
+						_inAdapter = new SlippageMessageAdapter(_inAdapter) { SlippageManager = SlippageManager, OwnInnerAdaper = true };
+
+					if (PnLManager != null)
+						_inAdapter = new PnLMessageAdapter(_inAdapter) { PnLManager = PnLManager, OwnInnerAdaper = true };
+
+					if (CommissionManager != null)
+						_inAdapter = new CommissionMessageAdapter(_inAdapter) { CommissionManager = CommissionManager, OwnInnerAdaper = true };
+
+					if (RiskManager != null)
+						_inAdapter = new RiskMessageAdapter(_inAdapter) { RiskManager = RiskManager, OwnInnerAdaper = true };
+
+					if (_entityRegistry != null && _storageRegistry != null)
+						_inAdapter = StorageAdapter = new StorageMessageAdapter(_inAdapter, _entityRegistry, _storageRegistry) { OwnInnerAdaper = true };
+
+					_inAdapter.NewOutMessage += AdapterOnNewOutMessage;
 				}
 			}
 		}

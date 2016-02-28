@@ -308,14 +308,6 @@ namespace StockSharp.Studio.Controls
 			});
 			cmdSvc.Register<ResetedCommand>(this, false, cmd => new RequestMarketDataCommand(Settings.Security, MarketDataTypes.MarketDepth).Process(this));
 
-			cmdSvc.Register<SelectCommand>(this, true, cmd =>
-			{
-				if(Settings.Security != null)
-					return;
-
-				Settings.Security = cmd.Instance as Security;
-			});
-
 			WhenLoaded(() =>
 			{
 				_isLoaded = true;
@@ -409,7 +401,6 @@ namespace StockSharp.Studio.Controls
 			cmdSvc.UnRegister<ClearMarketDepthCommand>(this);
 			cmdSvc.UnRegister<OrderCommand>(this);
 			cmdSvc.UnRegister<ResetedCommand>(this);
-			cmdSvc.UnRegister<SelectCommand>(this);
 		}
 
 		public override void Save(SettingsStorage settings)
@@ -515,9 +506,8 @@ namespace StockSharp.Studio.Controls
 		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
 		{
 			var error = LocalizedStrings.Str3273;
-			decimal price;
 
-			if(!(value is decimal))
+			if (!(value is decimal))
 				return new ValidationResult(false, error);
 
 			return (decimal)value <= 0 ? 
