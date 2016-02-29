@@ -17,15 +17,16 @@ namespace StockSharp.Hydra.Panes
 {
 	public partial class PaneWindow
 	{
-		public PaneWindow()
+        public PaneWindow()
 		{
 			InitializeComponent();
 		}
 
-		public IPane Pane
+        private IPane _dataContext;
+        public IPane Pane
 		{
-			get { return (IPane)DataContext; }
-			set { DataContext = value; }
+			get { return (IPane)_dataContext; }
+			set { _dataContext = value; }
 		}
 	}
 }

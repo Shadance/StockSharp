@@ -54,7 +54,18 @@ namespace StockSharp.Hydra
 
 			public LanguageSorter()
 			{
-				_language = Thread.CurrentThread.CurrentCulture.Name == "en-US" ? Languages.English : Languages.Russian;
+			    switch (Thread.CurrentThread.CurrentCulture.Name)
+			    {
+                    case "ru-RU":
+                        _language = Languages.Russian;
+			            break;
+                    case "en-US":
+                        _language = Languages.English;
+                        break;
+                    default:
+                        _language = Languages.English;
+                        break;
+                }
 			}
 
 			public int Compare(object x, object y)
@@ -174,7 +185,7 @@ namespace StockSharp.Hydra
 						GuiDispatcher.GlobalDispatcher.AddSyncAction(() => BusyIndicator.BusyContent = LocalizedStrings.Str2904Params.Put(title));
 						var newTask = task.CreateInstance<IHydraTask>();
 						InitTask(newTask, settings);
-						tasks.Add(newTask);
+                        tasks.Add(newTask);
 					}
 					catch (Exception ex)
 					{
@@ -301,9 +312,11 @@ namespace StockSharp.Hydra
 
 		private void ExecutedRemoveTaskCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+		    if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedRemoveTaskCommand with Paremeter type != ListViewItem");
 
+            var lvi = (ListViewItem)e.Parameter;
+			var task = lvi.DataContext as IHydraTask;
 			if (task == null)
 				return;
 
@@ -316,7 +329,7 @@ namespace StockSharp.Hydra
 				{
 					if (res)
 					{
-						var wnd = DockSite.DocumentWindows
+						var wnd = DockSite.Children
 							.OfType<PaneWindow>()
 							.Where(w => w.Pane is TaskPane)
 							.FirstOrDefault(w => ((TaskPane)w.Pane).Task == task);
@@ -348,11 +361,13 @@ namespace StockSharp.Hydra
 
 		private void ExecutedEditTaskSettingsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+            if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedEditTaskSettingsCommand with Paremeter type != ListViewItem");
 
-			if (task == null)
-				return;
+            var lvi = (ListViewItem)e.Parameter;
+            var task = lvi.DataContext as IHydraTask;
+            if (task == null)
+                return;
 
 			EditTask(task);
 		}
@@ -458,9 +473,6 @@ namespace StockSharp.Hydra
 					if (first != null)
 					{
 						var isTool = first.IsCategoryOf(TaskCategories.Tool);
-
-						NavigationBar.SelectedIndex = isTool ? 1 : 0;
-
 						var listView = isTool ? CurrentTools : CurrentSources;
 
 						listView.SelectedItem = first;
@@ -481,7 +493,7 @@ namespace StockSharp.Hydra
 
 		private TaskPane EnsureTaskPane(IHydraTask task)
 		{
-			var taskWnd = DockSite.DocumentWindows.FirstOrDefault(w =>
+			var taskWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 			{
 				var pw = w as PaneWindow;
 
@@ -498,7 +510,7 @@ namespace StockSharp.Hydra
 
 			if (taskWnd != null)
 			{
-				taskWnd.Activate();
+				taskWnd.IsActive = true;
 				return null;
 			}
 			else
@@ -507,17 +519,19 @@ namespace StockSharp.Hydra
 
 		private void ExecutedTaskEnabledChangedCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+            if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedTaskEnabledChangedCommand with Paremeter type != ListViewItem");
 
-			if (task == null)
-				return;
+            var lvi = (ListViewItem)e.Parameter;
+            var task = lvi.DataContext as IHydraTask;
+            if (task == null)
+                return;
 
-			if (task.Settings.IsEnabled)
-				lv.ScrollIntoView(task);
+            if (task.Settings.IsEnabled)
+                lvi.Focus();
 
-			//если задача была включена впервые - открыть окно редактирования настроек
-			if (task.Settings.IsDefault && task.Settings.IsEnabled)
+            //если задача была включена впервые - открыть окно редактирования настроек
+            if (task.Settings.IsDefault && task.Settings.IsEnabled)
 			{
 				EditTask(task);
 
@@ -690,10 +704,10 @@ namespace StockSharp.Hydra
 		{
 			var item = ((ListView)sender).SelectedItem;
 
-			var wnd = DockSite.DocumentWindows.SingleOrDefault(w => w.DataContext == item);
+			var wnd = DockSite.Children.OfType<PaneWindow>().SingleOrDefault(w => w.Pane == item);
 
 			if (wnd != null)
-				wnd.Activate();
+				wnd.IsActive = true;
 		}
 
 		private void CurrentTasks_OnSelectionItemDoubleClick(object sender, MouseButtonEventArgs e)

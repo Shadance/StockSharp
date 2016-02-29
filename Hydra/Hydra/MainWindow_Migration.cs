@@ -33,7 +33,6 @@ namespace StockSharp.Hydra
 	using StockSharp.Hydra.Core;
 	using StockSharp.Logging;
 	using StockSharp.Localization;
-	using StockSharp.Configuration;
 
 	partial class MainWindow
 	{

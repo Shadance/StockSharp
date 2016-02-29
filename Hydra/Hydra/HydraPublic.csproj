@@ -16,6 +16,7 @@
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -28,7 +29,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -42,6 +42,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,15 +57,36 @@
   <PropertyGroup>
     <ApplicationIcon>..\stocksharp_data.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>StockSharp.Hydra.App</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ecng.Xaml.Charting">
       <HintPath>..\..\References\Ecng\Ecng.Xaml.Charting.dll</HintPath>
     </Reference>
+    <Reference Include="Fluent, Version=3.6.1.236, Culture=neutral, PublicKeyToken=3e436e32a8c5546f, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Fluent.Ribbon.3.6.1.236\lib\net45\Fluent.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ICSharpCode.AvalonEdit">
+      <HintPath>..\..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Expression.Effects, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Expression.Interactions, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Expression.Prototyping.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="MoreLinq">
       <HintPath>..\..\References\Ecng\MoreLinq.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationBuildTasks" />
+    <Reference Include="PresentationFramework.Aero" />
+    <Reference Include="presentationframework.aero2" />
+    <Reference Include="presentationframework.aerolite" />
+    <Reference Include="PresentationFramework.Classic" />
+    <Reference Include="PresentationFramework.Luna" />
+    <Reference Include="PresentationFramework.Royale" />
+    <Reference Include="ReachFramework" />
     <Reference Include="StockSharp.Algo.History">
       <HintPath>..\..\Algo.History\StockSharp.Algo.History.dll</HintPath>
     </Reference>
@@ -77,6 +99,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
@@ -86,21 +109,6 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="Ecng.Localization">
       <HintPath>..\..\References\Ecng\Ecng.Localization.dll</HintPath>
-    </Reference>
-    <Reference Include="ActiproSoftware.Docking.Wpf">
-      <HintPath>..\..\References\Actipro\ActiproSoftware.Docking.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="ActiproSoftware.Editors.Wpf">
-      <HintPath>..\..\References\Actipro\ActiproSoftware.Editors.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="ActiproSoftware.Navigation.Wpf">
-      <HintPath>..\..\References\Actipro\ActiproSoftware.Navigation.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="ActiproSoftware.Shared.Wpf">
-      <HintPath>..\..\References\Actipro\ActiproSoftware.Shared.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="ActiproSoftware.Views.Wpf">
-      <HintPath>..\..\References\Actipro\ActiproSoftware.Views.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="AutomaticUpdaterWPF">
       <HintPath>..\..\References\AutomaticUpdaterWPF.dll</HintPath>
@@ -141,6 +149,21 @@
     <Reference Include="Ecng.Xaml">
       <HintPath>..\..\References\Ecng\Ecng.Xaml.dll</HintPath>
     </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.DataGrid">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.DataGrid.dll</HintPath>
+    </Reference>
     <Reference Include="Xceed.Wpf.Toolkit">
       <HintPath>..\..\References\Ecng\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
@@ -162,6 +185,12 @@
     </Compile>
     <Compile Include="Controls\ImportEnumMappingButton.xaml.cs">
       <DependentUpon>ImportEnumMappingButton.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Panes\CodePanel.xaml.cs">
+      <DependentUpon>CodePanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Panes\CodeReferencesWindow.xaml.cs">
+      <DependentUpon>CodeReferencesWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Panes\ExchangeBoardPane.xaml.cs">
       <DependentUpon>ExchangeBoardPane.xaml</DependentUpon>
@@ -269,6 +298,14 @@
     <Page Include="Controls\ImportEnumMappingButton.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Panes\CodePanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Panes\CodeReferencesWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Panes\ExchangeBoardPane.xaml">
       <SubType>Designer</SubType>
@@ -417,7 +454,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="Properties\Licenses.licx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -426,6 +462,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
     <None Include="StockSharp.db" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -471,9 +508,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Folder_32x32.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\database_inactive.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Close.png" />
@@ -530,7 +564,7 @@
       <Name>Messages</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Xaml.Actipro\Xaml.ActiproPublic.csproj">
-      <Project>{D556FA3F-E40E-4F76-B3CA-B18134247FD1}</Project>
+      <Project>{d556fa3f-e40e-4f76-b3ca-b18134247fd1}</Project>
       <Name>Xaml.ActiproPublic</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Xaml\Xaml.csproj">
@@ -541,6 +575,78 @@
       <Project>{95ca16e0-0a47-43a3-aab7-7e0803e817ca}</Project>
       <Name>CorePublic</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\database.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\db_add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\db_comit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\db_remove.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\db_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\file_new.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\geany.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\gksu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\preferences.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\seahorse.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\tasks.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\stock_ticker.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\system_config_boot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\package_new.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\package_install.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\package_remove.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\text_x_log.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\text_x_makefile.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\text_x_changelog.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\wicd_client.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\vive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\wine.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\widelands.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\human_add_folder_to_archive.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

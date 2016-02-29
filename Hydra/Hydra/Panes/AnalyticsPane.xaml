@@ -1,9 +1,8 @@
 <UserControl x:Class="StockSharp.Hydra.Panes.AnalyticsPane"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"             xmlns:loc="clr-namespace:StockSharp.Localization;assembly=StockSharp.Localization"
-             xmlns:docking="http://schemas.actiprosoftware.com/winfx/xaml/docking"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:StockSharp.Localization;assembly=StockSharp.Localization"
              xmlns:sx="http://schemas.stocksharp.com/xaml"
-             xmlns:shared="http://schemas.actiprosoftware.com/winfx/xaml/shared"
              xmlns:ex="clr-namespace:Ecng.Xaml;assembly=Ecng.Xaml"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
 			 xmlns:local="clr-namespace:StockSharp.Hydra.Panes">
@@ -25,8 +24,7 @@
 	</UserControl.CommandBindings>
 
 	<DockPanel>
-		<shared:PixelSnapper DockPanel.Dock="Top">
-			<ToolBar>
+			<ToolBar DockPanel.Dock="Top">
 				<Button ToolTip="{x:Static loc:LocalizedStrings.Str1519}" ToolTipService.ShowOnDisabled="True" Command="{x:Static local:AnalyticsPane.SaveCommand}">
 					<ex:BmpImage Source="pack://application:,,,/StockSharp.Xaml;component/Images/save_16x16.png" Style="{StaticResource ToolbarImageStyle}" />
 				</Button>
@@ -54,24 +52,20 @@
 				<Separator/>
 				<sx:HelpButton DocUrl="http://stocksharp.com/doc/html/7749ebdf-8bd5-4fae-a35c-d7e38f496c4a.htm" />
 			</ToolBar>
-		</shared:PixelSnapper>
 
-		<docking:DockSite x:Name="DockSite" AreDocumentWindowsDestroyedOnClose="False">
+		<!-- docking:DockSite x:Name="DockSite" AreDocumentWindowsDestroyedOnClose="False">
 			<docking:SplitContainer x:Name="MainSplitContainer" Orientation="Vertical">
-				<docking:Workspace>
-					<docking:TabbedMdiHost>
-						<docking:TabbedMdiContainer>
-							<docking:DocumentWindow Title="{x:Static loc:LocalizedStrings.XamlStr661}" CanClose="False">
-								<sx:CodePanel x:Name="CodePanel" CompilingCode="CodePanel_OnCompilingCode" />
-							</docking:DocumentWindow>
-							<docking:DocumentWindow x:Name="ChartPanel" Title="{x:Static loc:LocalizedStrings.Str3200}" CanClose="False">
-							</docking:DocumentWindow>
-							<docking:DocumentWindow x:Name="GridPanel" Title="{x:Static loc:LocalizedStrings.Str3280}" CanClose="False">
-							</docking:DocumentWindow>
-						</docking:TabbedMdiContainer>
-					</docking:TabbedMdiHost>
-				</docking:Workspace>
 			</docking:SplitContainer>
-		</docking:DockSite>
-	</DockPanel>
+		</-->
+
+        <TabControl x:Name="DockSite">
+            <TabItem Header="{x:Static loc:LocalizedStrings.XamlStr661}">
+                <local:CodePanel x:Name="CodePanel" CompilingCode="CodePanel_OnCompilingCode" />
+            </TabItem>
+            <TabItem x:Name="ChartPanel" Header="{x:Static loc:LocalizedStrings.Str3200}">
+            </TabItem>
+            <TabItem x:Name="GridPanel" Header="{x:Static loc:LocalizedStrings.Str3280}">
+            </TabItem>
+        </TabControl>
+    </DockPanel>
 </UserControl>

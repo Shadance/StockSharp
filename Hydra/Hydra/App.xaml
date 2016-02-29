@@ -1,4 +1,4 @@
-﻿<sx:ActiproBaseApplication 
+﻿<sx:ExtendedBaseApplication
 			x:Class="StockSharp.Hydra.App"
 			xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 			xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,14 +6,20 @@
 			xmlns:sx="http://schemas.stocksharp.com/xaml"
 			xmlns:xaml="clr-namespace:Ecng.Xaml;assembly=Ecng.Xaml">
 
-	<sx:ActiproBaseApplication.Resources>
-		<Style TargetType="{x:Type xaml:BmpImage}" x:Key="ToolbarImageStyle">
-			<Style.Triggers>
-				<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Button}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
-					<Setter Property="Opacity" Value="0.3"></Setter>
-				</DataTrigger>
-			</Style.Triggers>
-		</Style>
-	</sx:ActiproBaseApplication.Resources>
-	
-</sx:ActiproBaseApplication>
+    <sx:ExtendedBaseApplication.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--Attach Default Fluent Control's Theme-->
+                <ResourceDictionary Source="pack://application:,,,/Fluent;Component/Themes/Windows8/Generic.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="{x:Type xaml:BmpImage}" x:Key="ToolbarImageStyle">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Button}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
+                        <Setter Property="Opacity" Value="0.3"></Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </sx:ExtendedBaseApplication.Resources>
+    
+</sx:ExtendedBaseApplication>

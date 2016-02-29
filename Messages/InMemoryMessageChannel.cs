@@ -69,6 +69,7 @@ namespace StockSharp.Messages
 		/// </summary>
 		/// <param name="name">Channel name.</param>
 		/// <param name="errorHandler">Error handler.</param>
+		/// <param name="initMessage"> default: null</param>
 		public InMemoryMessageChannel(string name, Action<Exception> errorHandler, Action<Message> initMessage = null)
 		{
 			if (name.IsEmpty())
