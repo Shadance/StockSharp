@@ -23,7 +23,8 @@
         <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
         <converters:InverseBooleanConverter x:Key="BoolToOppositeConverter"/>
         <converters:MultiBoolToOpacityConverter x:Key="MultiBoolToOpacityConverter"/>
-
+        <converters:NullImageConverter x:Key="NullImageConverter"/>
+        
         <LinearGradientBrush x:Key="CheckedBlue" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#FF285AB3" Offset="0" />
             <GradientStop Color="#FF4184EC" Offset="0.5" />
@@ -225,57 +226,62 @@
             </Setter>
         </Style>
 
-        <Style x:Key="TaskListViewItemStyle" TargetType="{x:Type ListViewItem}">
+        <Style x:Key="TaskListViewItemStyle" TargetType="ListViewItem">
             <Style.Resources>
                 <converters:BoolToBrushConverter x:Key="BoolToBackground" FalseBrushValue="White" TrueBrushValue="#f8ce53"/>
                 <converters:BoolToBrushConverter x:Key="BoolToBorder" FalseBrushValue="#D0D0D0" TrueBrushValue="#f8ce53"/>
             </Style.Resources>
 
-            <Setter Property="Background" Value="{Binding (core:IHydraTask.Settings).IsEnabled, Converter={StaticResource BoolToBackground}}"/>
-            <Setter Property="BorderBrush" Value="{Binding (core:IHydraTask.Settings).IsEnabled, Converter={StaticResource BoolToBorder}}" />
+            <Setter Property="Background" Value="{Binding Path=(core:IHydraTask.Settings).IsEnabled, Converter={StaticResource BoolToBackground}}"/>
+            <Setter Property="BorderBrush" Value="{Binding Path=(core:IHydraTask.Settings).IsEnabled, Converter={StaticResource BoolToBorder}}" />
             <Setter Property="BorderThickness" Value="3" />
             <Setter Property="Margin" Value="2" />
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListViewItem}">
+                    <ControlTemplate TargetType="ListViewItem">
                         <Border x:Name="border" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}"
-        					BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
-        					CornerRadius="3">
+								BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="3">
                             <StackPanel Margin="5">
                                 <StackPanel Orientation="Horizontal">
-                                    <ex:BmpImage Source="{Binding XPath='pack://application:,,,Resources/logo.png'}" Width="24" Height="24" VerticalAlignment="Center" />
-                                    <TextBlock FontWeight="Bold" Text="{Binding (core:IHydraTask.Settings).Title}" VerticalAlignment="Center" Margin="5,0,0,0" />
+                                    <ex:BmpImage Source="{Binding Path=(core:IHydraTask.Icon), Converter={StaticResource NullImageConverter}}" VerticalAlignment="Center" />
+                                    <TextBlock FontWeight="Bold" Text="{Binding Path=(core:IHydraTask.Settings).Title}" VerticalAlignment="Center" Margin="5,0,0,0" />
                                 </StackPanel>
+
                                 <StackPanel Orientation="Horizontal" x:Name="buttons" Visibility="Collapsed" Margin="0,3,0,0">
-                                    <Button Margin="3" Padding="0" BorderBrush="{x:Null}" x:Name="btnSettings" Focusable="False" Background="Transparent"
-        								Command="{x:Static hydra:MainWindow.EditTaskSettingsCommand}"
-        								CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}">
+                                    <Button Margin="3" Padding="0" BorderBrush="{x:Null}" Name="btnSettings" Focusable="False" Background="Transparent"
+											Command="{x:Static hydra:MainWindow.EditTaskSettingsCommand}"
+											CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}">
                                         <Button.Opacity>
                                             <MultiBinding Converter="{StaticResource MultiBoolToOpacityConverter}" ConverterParameter="true">
                                                 <Binding Path="IsStarted" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}"/>
-                                                <Binding Path="(core:IHydraTask.Settings).IsEnabled"/>
+                                                <Binding Path="Settings.IsEnabled"/>
                                             </MultiBinding>
                                         </Button.Opacity>
 
-                                        <ex:BmpImage Source="pack://application:,,,/StockSharp.Xaml;component/Images/edit_24x24.png" ToolTip="{x:Static loc:LocalizedStrings.XamlStr412}" Width="24" Height="24"/>
+                                        <Button.Content>
+                                            <ex:BmpImage Source="pack://application:,,,/StockSharp.Xaml;component/Images/edit_24x24.png" ToolTip="{x:Static loc:LocalizedStrings.XamlStr412}" />
+                                        </Button.Content>
                                     </Button>
 
-                                    <CheckBox Style="{StaticResource OrangeSwitchStyle}" Margin="3" IsChecked="{Binding (core:IHydraTask.Settings).IsEnabled}" DockPanel.Dock="Right"
-        								Opacity="{Binding IsStarted, ConverterParameter=true, Converter={StaticResource BoolToOpacityConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}"
-        								Command="{x:Static hydra:MainWindow.TaskEnabledChangedCommand}"
-        								CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}" />
+                                    <CheckBox Style="{StaticResource OrangeSwitchStyle}" Margin="3" IsChecked="{Binding Settings.IsEnabled}" DockPanel.Dock="Right"
+											  Opacity="{Binding Path=IsStarted, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}, Converter={StaticResource BoolToOpacityConverter}, ConverterParameter=true}"
+											  Command="{x:Static hydra:MainWindow.TaskEnabledChangedCommand}"
+											  CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}" />
 
-                                    <Button Background="Transparent" Margin="3" Padding="0" BorderBrush="{x:Null}" x:Name="btnClose" Focusable="False"
-        								Command="{x:Static hydra:MainWindow.RemoveTaskCommand}"
-        								CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}">
+                                    <Button Background="Transparent" Margin="3" Padding="0" BorderBrush="{x:Null}" Name="btnClose" Focusable="False"
+											Command="{x:Static hydra:MainWindow.RemoveTaskCommand}"
+											CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}">
                                         <Button.Opacity>
                                             <MultiBinding Converter="{StaticResource MultiBoolToOpacityConverter}" ConverterParameter="true">
                                                 <Binding Path="IsStarted" RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}"/>
-                                                <Binding Path="(core:IHydraTask.Settings).IsEnabled"/>
+                                                <Binding Path="Settings.IsEnabled"/>
                                             </MultiBinding>
                                         </Button.Opacity>
 
-                                        <ex:BmpImage Source="Images\Close.png" Width="24" Height="24" ToolTip="{x:Static loc:LocalizedStrings.XamlStr787}" x:Name="imgClose" />
+                                        <Button.Content>
+                                            <ex:BmpImage Source="Images\Close.png" ToolTip="{x:Static loc:LocalizedStrings.XamlStr787}" x:Name="imgClose" />
+                                        </Button.Content>
                                     </Button>
                                 </StackPanel>
                             </StackPanel>
@@ -382,12 +388,20 @@
                                 <TextBlock><Run Text="{x:Static loc:LocalizedStrings.XamlStr136}"/><Run Text="..."/></TextBlock>
                             </fluent:MenuItem.Header>
                         </fluent:MenuItem>
-
                     </fluent:RibbonGroupBox>
-                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" >
-                        <fluent:RibbonMenu Height="100">
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" Header="{x:Static loc:LocalizedStrings.Str3237}">
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr106}" Command="{x:Static hydra:MainWindow.OpenLogCommand}" />
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.LogDirectory}" Command="{x:Static hydra:MainWindow.LogDirectoryCommand}"/>
+                        <fluent:MenuItem x:Name="MemoryStatMenuItem" Header="{x:Static loc:LocalizedStrings.MemoryStatistics}" Command="{x:Static hydra:MainWindow.MemoryStatisticsCommand}"/>
+                    </fluent:RibbonGroupBox>
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Str2121}">
+                        <fluent:MenuItem x:Name="Analytics" Header="{x:Static loc:LocalizedStrings.Str1221}" Command="{x:Static hydra:MainWindow.AnalyticsCommand}" />
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2831}" Command="{x:Static hydra:MainWindow.BoardsCommand}" />
+                    </fluent:RibbonGroupBox>
 
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Import}">
+                </fluent:RibbonTabItem>
+                    <fluent:RibbonTabItem HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="{x:Static loc:LocalizedStrings.Securities}">
+                        <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" Header="{x:Static loc:LocalizedStrings.Import}">
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Securities}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="Security"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Ticks}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="Trade"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.MarketDepths}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="Depth"/>
@@ -396,9 +410,8 @@
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Level1}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="Level1"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.News}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="News"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Transactions}" Command="{x:Static hydra:MainWindow.ImportPaneCommand}" CommandParameter="Transaction"/>
-                            </fluent:MenuItem>
-
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Export}">
+                    </fluent:RibbonGroupBox>
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" Header="{x:Static loc:LocalizedStrings.Export}">
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Securities}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Security"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Ticks}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Trade"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.MarketDepths}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Depth"/>
@@ -407,63 +420,30 @@
                                 <fluent:MenuItem Header="Level 1" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Level1"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.News}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="News"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Transactions}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Transaction"/>
-                            </fluent:MenuItem>
-
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Securities}">
+                    </fluent:RibbonGroupBox>
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" Header="{x:Static loc:LocalizedStrings.Securities}">
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2835}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Security"/>
                                 <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2892}" Click="GluingData_Click"/>
-                            </fluent:MenuItem>
-
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2121}">
-                                <fluent:MenuItem x:Name="Analytics" Header="{x:Static loc:LocalizedStrings.Str1221}" Command="{x:Static hydra:MainWindow.AnalyticsCommand}" />
-                                <Separator/>
-                                <fluent:MenuItem x:Name="ResetSettings" Header="{x:Static loc:LocalizedStrings.Str1520}" Click="ResetSettings_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}"/>
-                                <fluent:MenuItem x:Name="EraseData" Header="{x:Static loc:LocalizedStrings.XamlStr786}" Click="EraseData_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}"/>
-                                <Separator/>
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2831}" Command="{x:Static hydra:MainWindow.BoardsCommand}" />
-                                <fluent:MenuItem x:Name="Synchronize" Click="Synchronize_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}">
-                                    <fluent:MenuItem.Header>
-                                        <TextBlock><Run Text="{x:Static loc:LocalizedStrings.XamlStr652}" /><Run Text="..."/></TextBlock>
-                                    </fluent:MenuItem.Header>
-                                </fluent:MenuItem>
-                                <Separator/>
-                                <fluent:MenuItem x:Name="ProxyButton" Click="ProxySettings_Click">
-                                    <fluent:MenuItem.Header>
-                                        <TextBlock><Run Text="{x:Static loc:LocalizedStrings.NetworkSettings}" /><Run Text="..."/></TextBlock>
-                                    </fluent:MenuItem.Header>
-                                </fluent:MenuItem>
-                                <fluent:MenuItem x:Name="ServiceButton" Click="Settings_Click">
-                                    <fluent:MenuItem.Header>
-                                        <TextBlock><Run Text="{x:Static loc:LocalizedStrings.Settings}" /><Run Text="..."/></TextBlock>
-                                    </fluent:MenuItem.Header>
-                                </fluent:MenuItem>
-                            </fluent:MenuItem>
-
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str3237}">
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr106}" Command="{x:Static hydra:MainWindow.OpenLogCommand}" />
-                                <Separator/>
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.LogDirectory}" Command="{x:Static hydra:MainWindow.LogDirectoryCommand}"/>
-                                <Separator/>
-                                <fluent:MenuItem x:Name="MemoryStatMenuItem" Header="{x:Static loc:LocalizedStrings.MemoryStatistics}" Command="{x:Static hydra:MainWindow.MemoryStatisticsCommand}"/>
-                            </fluent:MenuItem>
-
-                            <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Help}">
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.OnlineDoc}" Command="{x:Static hydra:MainWindow.HelpCommand}"/>
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str1470}" x:Name="MnuCheckForUpdates"/>
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr610}" x:Name="MnuTargetPlatform" Command="{x:Static hydra:MainWindow.TargetPlatformCommand}"/>
-                                <Separator/>
-                                <fluent:MenuItem Command="{x:Static hydra:MainWindow.AboutCommand}">
-                                    <fluent:MenuItem.Header>
-                                        <TextBlock><Run Text="{x:Static loc:LocalizedStrings.About}" /><Run Text="..."/></TextBlock>
-                                    </fluent:MenuItem.Header>
-                                </fluent:MenuItem>
-                            </fluent:MenuItem>
-                        </fluent:RibbonMenu>
-
                     </fluent:RibbonGroupBox>
-
                 </fluent:RibbonTabItem>
-                <fluent:RibbonTabItem HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <fluent:RibbonTabItem HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="{x:Static loc:LocalizedStrings.Settings}">
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Settings}">
+                        <fluent:MenuItem x:Name="ResetSettings" Header="{x:Static loc:LocalizedStrings.Str1520}" Click="ResetSettings_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}"/>
+                        <fluent:MenuItem x:Name="EraseData" Header="{x:Static loc:LocalizedStrings.XamlStr786}" Click="EraseData_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}"/>
+                        <fluent:MenuItem x:Name="Synchronize" Header="{x:Static loc:LocalizedStrings.XamlStr652}" Click="Synchronize_Click" IsEnabled="{Binding IsStarted, Converter={StaticResource BoolToOppositeConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type hydra:MainWindow}}}" />
+                        <fluent:MenuItem x:Name="ProxyButton" Header="{x:Static loc:LocalizedStrings.NetworkSettings}" Click="ProxySettings_Click"/>
+                        <fluent:MenuItem x:Name="ServiceButton" Header="{x:Static loc:LocalizedStrings.Settings}" Click="Settings_Click" />
+                        <Separator/>
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str1470}" x:Name="MnuCheckForUpdates"/>
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr610}" x:Name="MnuTargetPlatform" Command="{x:Static hydra:MainWindow.TargetPlatformCommand}"/>
+                    </fluent:RibbonGroupBox>
+                </fluent:RibbonTabItem>
+                <fluent:RibbonTabItem HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="{x:Static loc:LocalizedStrings.Help}">
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Help}">
+                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.OnlineDoc}" Command="{x:Static hydra:MainWindow.HelpCommand}"/>
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.About}" Command="{x:Static hydra:MainWindow.AboutCommand}" />
+                    </fluent:RibbonGroupBox>
+                </fluent:RibbonTabItem>
 
             </fluent:Ribbon>
 

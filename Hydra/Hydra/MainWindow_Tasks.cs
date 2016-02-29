@@ -312,9 +312,11 @@ namespace StockSharp.Hydra
 
 		private void ExecutedRemoveTaskCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+		    if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedRemoveTaskCommand with Paremeter type != ListViewItem");
 
+            var lvi = (ListViewItem)e.Parameter;
+			var task = lvi.DataContext as IHydraTask;
 			if (task == null)
 				return;
 
@@ -359,11 +361,13 @@ namespace StockSharp.Hydra
 
 		private void ExecutedEditTaskSettingsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+            if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedEditTaskSettingsCommand with Paremeter type != ListViewItem");
 
-			if (task == null)
-				return;
+            var lvi = (ListViewItem)e.Parameter;
+            var task = lvi.DataContext as IHydraTask;
+            if (task == null)
+                return;
 
 			EditTask(task);
 		}
@@ -515,17 +519,19 @@ namespace StockSharp.Hydra
 
 		private void ExecutedTaskEnabledChangedCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var lv = (ListView)e.Source;
-			var task = lv.SelectedItem as IHydraTask;
+            if (e.Parameter.GetType() != typeof(ListViewItem))
+                throw new Exception("ExecutedTaskEnabledChangedCommand with Paremeter type != ListViewItem");
 
-			if (task == null)
-				return;
+            var lvi = (ListViewItem)e.Parameter;
+            var task = lvi.DataContext as IHydraTask;
+            if (task == null)
+                return;
 
-			if (task.Settings.IsEnabled)
-				lv.ScrollIntoView(task);
+            if (task.Settings.IsEnabled)
+                lvi.Focus();
 
-			//если задача была включена впервые - открыть окно редактирования настроек
-			if (task.Settings.IsDefault && task.Settings.IsEnabled)
+            //если задача была включена впервые - открыть окно редактирования настроек
+            if (task.Settings.IsDefault && task.Settings.IsEnabled)
 			{
 				EditTask(task);
 
