@@ -31,7 +31,6 @@ namespace StockSharp.Hydra.Panes
 
 	using StockSharp.Algo.Storages;
 	using StockSharp.BusinessEntities;
-	using StockSharp.Hydra.Core;
 	using StockSharp.Messages;
 	using StockSharp.Localization;
 
@@ -70,7 +69,7 @@ namespace StockSharp.Hydra.Panes
 			set { SelectSecurityBtn.SelectedSecurity = value; }
 		}
 
-		private IEnumerableEx<Level1ChangeMessage> GetMessages()
+		private IEnumerable<Level1ChangeMessage> GetMessages()
 		{
 			var excludedTypes = Enumerator
 				.GetValues<Level1Fields>()
@@ -87,13 +86,12 @@ namespace StockSharp.Hydra.Panes
 					excludedTypes.ForEach(t => m.Changes.Remove(t));
 					return m;
 				})
-				.Where(m => m.Changes.Any())
-				.ToEx(messages.Count);
+				.Where(m => m.Changes.Any());
 		}
 
 		private bool CheckExportTypes()
 		{
-			if (Level1FieldsCtrl.SelectedFields.Any() || ExportBtn.ExportType == ExportTypes.Bin)
+			if (Level1FieldsCtrl.SelectedFields.Any() || CanDirectExport)
 				return true;
 
 			new MessageBoxBuilder()
@@ -177,7 +175,7 @@ namespace StockSharp.Hydra.Panes
 					.ToArray();
 			}
 
-			FindedChanges.Load(storage.GetValue<SettingsStorage>("FindedChanges"));
+			FindedChanges.Load(storage.GetValue<SettingsStorage>(nameof(FindedChanges)));
 
 			var selectedFields = Level1FieldsCtrl.SelectedFields.ToArray();
 
@@ -192,7 +190,7 @@ namespace StockSharp.Hydra.Panes
 			base.Save(storage);
 
 			storage.SetValue("SelectedLevel1Fields", Level1FieldsCtrl.SelectedFields.Select(f => f.ToString()).Join(","));
-			storage.SetValue("FindedChanges", FindedChanges.Save());
+			storage.SetValue(nameof(FindedChanges), FindedChanges.Save());
 		}
 	}
 }

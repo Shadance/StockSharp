@@ -55,7 +55,6 @@ namespace StockSharp.Hydra.Finam
 			public FinamSettings(HydraTaskSettings settings)
 				: base(settings)
 			{
-				CollectionHelper.TryAdd(ExtensionInfo, "CandleDayStep", 30);
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -64,8 +63,8 @@ namespace StockSharp.Hydra.Finam
 			[PropertyOrder(0)]
 			public DateTime StartFrom
 			{
-				get { return ExtensionInfo["StartFrom"].To<DateTime>(); }
-				set { ExtensionInfo["StartFrom"] = value.Ticks; }
+				get { return ExtensionInfo[nameof(StartFrom)].To<DateTime>(); }
+				set { ExtensionInfo[nameof(StartFrom)] = value.Ticks; }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -74,8 +73,8 @@ namespace StockSharp.Hydra.Finam
 			[PropertyOrder(1)]
 			public int DayOffset
 			{
-				get { return ExtensionInfo["DayOffset"].To<int>(); }
-				set { ExtensionInfo["DayOffset"] = value; }
+				get { return ExtensionInfo[nameof(DayOffset)].To<int>(); }
+				set { ExtensionInfo[nameof(DayOffset)] = value; }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -84,8 +83,8 @@ namespace StockSharp.Hydra.Finam
 			[PropertyOrder(2)]
 			public bool IgnoreWeekends
 			{
-				get { return (bool)ExtensionInfo["IgnoreWeekends"]; }
-				set { ExtensionInfo["IgnoreWeekends"] = value; }
+				get { return (bool)ExtensionInfo[nameof(IgnoreWeekends)]; }
+				set { ExtensionInfo[nameof(IgnoreWeekends)] = value; }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -94,8 +93,8 @@ namespace StockSharp.Hydra.Finam
 			[PropertyOrder(3)]
 			public TempFiles UseTemporaryFiles
 			{
-				get { return ExtensionInfo["UseTemporaryFiles"].To<TempFiles>(); }
-				set { ExtensionInfo["UseTemporaryFiles"] = value.To<string>(); }
+				get { return ExtensionInfo[nameof(UseTemporaryFiles)].To<TempFiles>(); }
+				set { ExtensionInfo[nameof(UseTemporaryFiles)] = value.To<string>(); }
 			}
 
 			[CategoryLoc(_sourceName)]
@@ -104,13 +103,13 @@ namespace StockSharp.Hydra.Finam
 			[PropertyOrder(4)]
 			public int CandleDayStep
 			{
-				get { return ExtensionInfo["CandleDayStep"].To<int>(); }
+				get { return ExtensionInfo[nameof(CandleDayStep)].To<int>(); }
 				set
 				{
 					if (value < 1)
 						throw new ArgumentOutOfRangeException();
 
-					ExtensionInfo["CandleDayStep"] = value;
+					ExtensionInfo[nameof(CandleDayStep)] = value;
 				}
 			}
 		}
@@ -138,6 +137,7 @@ namespace StockSharp.Hydra.Finam
 
 			if (!settings.IsDefault)
 				return;
+
 			_settings.DayOffset = 1;
 			_settings.StartFrom = new DateTime(2001, 1, 1);
 			_settings.Interval = TimeSpan.FromDays(1);
@@ -205,6 +205,7 @@ namespace StockSharp.Hydra.Finam
 			var endDate = DateTime.Today - TimeSpan.FromDays(_settings.DayOffset);
 
 			var allDates = startDate.Range(endDate, TimeSpan.FromDays(1)).ToArray();
+			var anyData = false;
 
 			foreach (var security in selectedSecurities)
 			{
@@ -214,6 +215,8 @@ namespace StockSharp.Hydra.Finam
 				#region LoadTrades
 				if ((allSecurity ?? security).IsTicksEnabled())
 				{
+					anyData = true;
+
 					var storage = StorageRegistry.GetTradeStorage(security.Security, _settings.Drive, _settings.StorageFormat);
 					var emptyDates = allDates.Except(storage.Dates).ToArray();
 
@@ -266,6 +269,8 @@ namespace StockSharp.Hydra.Finam
 				#region LoadCandles
 				foreach (var pair in (allSecurity ?? security).GetCandleSeries())
 				{
+					anyData = true;
+
 					if (!CanProcess())
 						break;
 
@@ -330,10 +335,15 @@ namespace StockSharp.Hydra.Finam
 
 			if (CanProcess())
 			{
-				this.AddInfoLog(LocalizedStrings.Str2300);
+				if (anyData)
+				{
+					this.AddInfoLog(LocalizedStrings.Str2300);
 
-				_settings.StartFrom = endDate;
-				SaveSettings();
+					_settings.StartFrom = endDate;
+					SaveSettings();
+				}
+				else
+					this.AddWarningLog(LocalizedStrings.Str2913);
 			}
 
 			return base.OnProcess();

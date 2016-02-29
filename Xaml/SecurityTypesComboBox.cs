@@ -23,13 +23,12 @@ namespace StockSharp.Xaml
 	using Ecng.ComponentModel;
 
 	using StockSharp.Messages;
+	using StockSharp.Localization;
 
 	using Xceed.Wpf.Toolkit;
 	using Xceed.Wpf.Toolkit.Primitives;
 
 	using ComboItem = System.Collections.Generic.KeyValuePair<StockSharp.Messages.SecurityTypes, string>;
-
-	using StockSharp.Localization;
 
 	/// <summary>
 	/// The drop-down list to select the instrument types.
@@ -61,7 +60,7 @@ namespace StockSharp.Xaml
 		/// <summary>
 		/// <see cref="DependencyProperty"/> for <see cref="SecurityTypesComboBox.SelectedTypes"/>.
 		/// </summary>
-		public static readonly DependencyProperty SelectedTypesProperty = DependencyProperty.Register("SelectedTypes",
+		public static readonly DependencyProperty SelectedTypesProperty = DependencyProperty.Register(nameof(SelectedTypes),
 			typeof(IEnumerable<SecurityTypes>), typeof(SecurityTypesComboBox), new UIPropertyMetadata((s, e) =>
 			{
 				var comboBox = s as SecurityTypesComboBox;

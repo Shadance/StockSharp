@@ -16,6 +16,7 @@ Copyright 2010 by StockSharp, LLC
 namespace StockSharp.Hydra.Panes
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Windows;
 
@@ -54,7 +55,7 @@ namespace StockSharp.Hydra.Panes
 
 		private CandleSeries CandleSeries => new CandleSeries(CandleSettings.Settings.CandleType, SelectedSecurity, Arg);
 
-		private IEnumerableEx<CandleMessage> GetCandles()
+		private IEnumerable<CandleMessage> GetCandles()
 		{
 			var from = From.Value;
 			var to = To.Value.EndOfDay();
@@ -105,7 +106,7 @@ namespace StockSharp.Hydra.Panes
 			}
 		}
 
-		protected override bool CanDirectBinExport => base.CanDirectBinExport && BuildFrom.SelectedIndex == 0;
+		protected override bool CanDirectExport => BuildFrom.SelectedIndex == 0;
 
 		private void FindClick(object sender, RoutedEventArgs e)
 		{
@@ -167,11 +168,11 @@ namespace StockSharp.Hydra.Panes
 		{
 			base.Load(storage);
 
-			BuildedCandles.Load(storage.GetValue<SettingsStorage>("BuildedCandles"));
-			BuildFrom.SelectedIndex = storage.GetValue<int>("BuildFrom");
+			BuildedCandles.Load(storage.GetValue<SettingsStorage>(nameof(BuildedCandles)));
+			BuildFrom.SelectedIndex = storage.GetValue<int>(nameof(BuildFrom));
 
 			var settings = new CandleSeries();
-			settings.Load(storage.GetValue<SettingsStorage>("CandleSettings"));
+			settings.Load(storage.GetValue<SettingsStorage>(nameof(CandleSettings)));
 			CandleSettings.Settings = settings;
 		}
 
@@ -179,9 +180,9 @@ namespace StockSharp.Hydra.Panes
 		{
 			base.Save(storage);
 
-			storage.SetValue("BuildedCandles", BuildedCandles.Save());
-			storage.SetValue("BuildFrom", BuildFrom.SelectedIndex);
-			storage.SetValue("CandleSettings", CandleSettings.Settings.Save());
+			storage.SetValue(nameof(BuildedCandles), BuildedCandles.Save());
+			storage.SetValue(nameof(BuildFrom), BuildFrom.SelectedIndex);
+			storage.SetValue(nameof(CandleSettings), CandleSettings.Settings.Save());
 		}
 	}
 }

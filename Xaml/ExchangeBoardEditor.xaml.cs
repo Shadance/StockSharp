@@ -48,7 +48,7 @@ namespace StockSharp.Xaml
 		/// <summary>
 		/// The message about data saving error.
 		/// </summary>
-		public static readonly DependencyProperty SaveErrorMessageProperty = DependencyProperty.Register("SaveErrorMessage", typeof(string), typeof(ExchangeBoardEditor), new PropertyMetadata(default(string)));
+		public static readonly DependencyProperty SaveErrorMessageProperty = DependencyProperty.Register(nameof(SaveErrorMessage), typeof(string), typeof(ExchangeBoardEditor), new PropertyMetadata(default(string)));
 
 		private IExchangeInfoProvider Provider { get; }
 
@@ -285,7 +285,7 @@ namespace StockSharp.Xaml
 			var boardCode = SelectedBoardCode;
 
 			if (!boardCode.IsEmpty())
-				storage.SetValue("SelectedBoard", boardCode);
+				storage.SetValue(nameof(SelectedBoardCode), boardCode);
 		}
 
 		/// <summary>
@@ -294,7 +294,7 @@ namespace StockSharp.Xaml
 		/// <param name="storage">Settings storage.</param>
 		public void Load(SettingsStorage storage)
 		{
-			SetBoardCode(storage.GetValue("SelectedBoard", ExchangeBoard.Nasdaq.Code));
+			SetBoardCode(storage.GetValue(nameof(SelectedBoardCode), ExchangeBoard.Nasdaq.Code));
 		}
 	}
 

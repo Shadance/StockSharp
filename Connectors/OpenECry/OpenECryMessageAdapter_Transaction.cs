@@ -56,26 +56,16 @@ namespace StockSharp.OpenECry
 
 		private void ProcessOrderRegister(OrderRegisterMessage message)
 		{
+			var contact = LookupContract(message.SecurityId, message);
+
+			if (contact == null)
+				return;
+
 			var draft = _client.CreateDraft();
 
 			draft.Comments = message.Comment;
 			draft.Account = _client.Accounts[message.PortfolioName];
-			draft.Contract = _client.Contracts[message.SecurityId.SecurityCode];
-
-			if (draft.Contract == null)
-			{
-				ContractAction(message.SecurityId, 
-					() => { ProcessOrderRegister(message); },
-					() =>
-					{
-						var execMsg = message.ToExecutionMessage();
-						execMsg.Error = new InvalidOperationException($"Contract '{message.SecurityId.SecurityCode}' not found.");
-						execMsg.OrderState = OrderStates.Failed;
-						SendOutMessage(execMsg);
-					});
-
-				return;
-			}
+			draft.Contract = contact;
 
 			draft.Route = _client.Routes[message.SecurityId.BoardCode];
 			draft.Side = message.Side.ToOec();
@@ -92,7 +82,7 @@ namespace StockSharp.OpenECry
 
 				switch (cond.AssetType)
 				{
-					case OpenECryOrderCondition.AssetTypeEnum.All:
+					case OpenECryStopAssetTypes.All:
 						switch (cond.StopType)
 						{
 							case OpenECryStopType.StopLimit:
@@ -110,8 +100,8 @@ namespace StockSharp.OpenECry
 						}
 						break;
 
-					case OpenECryOrderCondition.AssetTypeEnum.Equity:
-					case OpenECryOrderCondition.AssetTypeEnum.Future:
+					case OpenECryStopAssetTypes.Equity:
+					case OpenECryStopAssetTypes.Future:
 
 						//if (!draft.Contract.IsEquityAsset && !draft.Contract.IsFuture)
 						//	throw new NotSupportedException(LocalizedStrings.Str2554);
@@ -132,7 +122,7 @@ namespace StockSharp.OpenECry
 								throw new ArgumentException(LocalizedStrings.Str2553Params.Put(cond.StopType));
 						}
 
-						if (cond.AssetType == OpenECryOrderCondition.AssetTypeEnum.Equity)
+						if (cond.AssetType == OpenECryStopAssetTypes.Equity)
 							draft.SetEquityTSData((double)(cond.Delta ?? 0), cond.IsPercentDelta ?? false, cond.TriggerType.ToOec());
 						else
 							draft.SetTSData((double)(cond.ReferencePrice ?? 0), (double)(cond.Delta ?? 0));

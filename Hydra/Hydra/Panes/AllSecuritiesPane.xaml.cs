@@ -51,7 +51,8 @@ namespace StockSharp.Hydra.Panes
 			SecurityPicker.SecurityProvider = ConfigManager.GetService<ISecurityProvider>();
 			SecurityPicker.ExcludeAllSecurity();
 
-			ExportBtn.EnableType(ExportTypes.Bin, false);
+			ExportBtn.SetTypeEnabled(ExportTypes.StockSharpBin, false);
+			ExportBtn.SetTypeEnabled(ExportTypes.StockSharpCsv, false);
 
 			MarketData.DataLoading += () => MarketDataBusyIndicator.IsBusy = true;
 			MarketData.DataLoaded += () => MarketDataBusyIndicator.IsBusy = false;
@@ -164,9 +165,9 @@ namespace StockSharp.Hydra.Panes
 
 			DrivePanel.StorageFormat = storage.GetValue<StorageFormats>("StorageFormat");
 
-			MarketData.Load(storage.GetValue<SettingsStorage>("MarketData"));
-			SecurityPicker.Load(storage.GetValue<SettingsStorage>("SecurityPicker"));
-			LookupPanel.Load(storage.GetValue<SettingsStorage>("LookupPanel"));
+			MarketData.Load(storage.GetValue<SettingsStorage>(nameof(MarketData)));
+			SecurityPicker.Load(storage.GetValue<SettingsStorage>(nameof(SecurityPicker)));
+			LookupPanel.Load(storage.GetValue<SettingsStorage>(nameof(LookupPanel)));
 		}
 
 		void IPersistable.Save(SettingsStorage storage)
@@ -176,9 +177,9 @@ namespace StockSharp.Hydra.Panes
 
 			storage.SetValue("StorageFormat", DrivePanel.StorageFormat.To<string>());
 
-			storage.SetValue("MarketData", MarketData.Save());
-			storage.SetValue("SecurityPicker", SecurityPicker.Save());
-			storage.SetValue("LookupPanel", LookupPanel.Save());
+			storage.SetValue(nameof(MarketData), MarketData.Save());
+			storage.SetValue(nameof(SecurityPicker), SecurityPicker.Save());
+			storage.SetValue(nameof(LookupPanel), LookupPanel.Save());
 		}
 
 		void IDisposable.Dispose()
@@ -203,7 +204,7 @@ namespace StockSharp.Hydra.Panes
 			if (path == null)
 				return;
 
-			Progress.Start(null, typeof(SecurityMessage), null, securities.Select(s => s.ToMessage()).ToEx(securities.Count), path);
+			Progress.Start(null, typeof(SecurityMessage), null, securities.Select(s => s.ToMessage()), securities.Count, path);
 		}
 	}
 }

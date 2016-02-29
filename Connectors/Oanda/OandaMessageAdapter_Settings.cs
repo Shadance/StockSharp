@@ -112,10 +112,7 @@ namespace StockSharp.Oanda
 		/// Available time frames.
 		/// </summary>
 		[Browsable(false)]
-		public static IEnumerable<TimeSpan> TimeFrames
-		{
-			get { return _timeFrames; }
-		}
+		public static IEnumerable<TimeSpan> TimeFrames => _timeFrames;
 
 		/// <summary>
 		/// Save settings.
@@ -125,8 +122,8 @@ namespace StockSharp.Oanda
 		{
 			base.Save(storage);
 
-			storage.SetValue("Server", Server.To<string>());
-			storage.SetValue("Token", Token);
+			storage.SetValue(nameof(Server), Server.To<string>());
+			storage.SetValue(nameof(Token), Token);
 		}
 
 		/// <summary>
@@ -137,8 +134,8 @@ namespace StockSharp.Oanda
 		{
 			base.Load(storage);
 
-			Server = storage.GetValue<OandaServers>("Server");
-			Token = storage.GetValue<SecureString>("Token");
+			Server = storage.GetValue<OandaServers>(nameof(Server));
+			Token = storage.GetValue<SecureString>(nameof(Token));
 		}
 	}
 }

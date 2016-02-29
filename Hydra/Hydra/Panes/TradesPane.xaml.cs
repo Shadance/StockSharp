@@ -16,10 +16,10 @@ Copyright 2010 by StockSharp, LLC
 namespace StockSharp.Hydra.Panes
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 	using System.Windows;
 
-	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Serialization;
 
@@ -51,30 +51,30 @@ namespace StockSharp.Hydra.Panes
 			set { SelectSecurityBtn.SelectedSecurity = value; }
 		}
 
-		private IEnumerableEx<ExecutionMessage> GetTrades()
+		private IEnumerable<ExecutionMessage> GetTrades()
 		{
 			switch (BuildFrom.SelectedIndex)
 			{
 				case 0:
 				{
-					var trades = StorageRegistry
+					IEnumerable<ExecutionMessage> trades = StorageRegistry
 						.GetTickMessageStorage(SelectedSecurity, Drive, StorageFormat)
 						.Load(From, To + TimeHelper.LessOneDay);
 
 					if (IsNonSystem.IsChecked == false)
-						trades = trades.Where(t => t.IsSystem != false).ToEx(trades.Count);
+						trades = trades.Where(t => t.IsSystem != false);
 
 					return trades;
 				}
 
 				case 1:
 				{
-					var orderLog = StorageRegistry
+					IEnumerable<ExecutionMessage> orderLog = StorageRegistry
 						.GetOrderLogMessageStorage(SelectedSecurity, Drive, StorageFormat)
 						.Load(From, To + TimeHelper.LessOneDay);
 
 					if (IsNonSystem.IsChecked == false)
-						orderLog = orderLog.Where(i => i.IsSystem != false).ToEx(orderLog.Count);
+						orderLog = orderLog.Where(i => i.IsSystem != false);
 
 					return orderLog.ToTicks();
 				}
@@ -102,7 +102,7 @@ namespace StockSharp.Hydra.Panes
 			Progress.Load(GetTrades(), FindedTrades.Messages.AddRange, 10000);
 		}
 
-		protected override bool CanDirectBinExport => base.CanDirectBinExport && BuildFrom.SelectedIndex == 0;
+		protected override bool CanDirectExport => BuildFrom.SelectedIndex == 0;
 
 		private void OnDateValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
 		{
@@ -126,18 +126,18 @@ namespace StockSharp.Hydra.Panes
 		{
 			base.Load(storage);
 
-			FindedTrades.Load(storage.GetValue<SettingsStorage>("FindedTrades"));
-			BuildFrom.SelectedIndex = storage.GetValue<int>("BuildFrom");
-			IsNonSystem.IsChecked = storage.GetValue<bool>("IsNonSystem");
+			FindedTrades.Load(storage.GetValue<SettingsStorage>(nameof(FindedTrades)));
+			BuildFrom.SelectedIndex = storage.GetValue<int>(nameof(BuildFrom));
+			IsNonSystem.IsChecked = storage.GetValue<bool>(nameof(IsNonSystem));
 		}
 
 		public override void Save(SettingsStorage storage)
 		{
 			base.Save(storage);
 
-			storage.SetValue("FindedTrades", FindedTrades.Save());
-			storage.SetValue("BuildFrom", BuildFrom.SelectedIndex);
-			storage.SetValue("IsNonSystem", IsNonSystem.IsChecked == true);
+			storage.SetValue(nameof(FindedTrades), FindedTrades.Save());
+			storage.SetValue(nameof(BuildFrom), BuildFrom.SelectedIndex);
+			storage.SetValue(nameof(IsNonSystem), IsNonSystem.IsChecked == true);
 		}
 	}
 }

@@ -59,7 +59,6 @@ namespace StockSharp.Hydra.Tools
 			public ExportSettings(HydraTaskSettings settings)
 				: base(settings)
 			{
-				ExtensionInfo.TryAdd("Header", string.Empty);
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3754Key)]
@@ -68,8 +67,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(0)]
 			public ExportTypes ExportType
 			{
-				get { return ExtensionInfo["ExportType"].To<ExportTypes>(); }
-				set { ExtensionInfo["ExportType"] = value.To<string>(); }
+				get { return ExtensionInfo[nameof(ExportType)].To<ExportTypes>(); }
+				set { ExtensionInfo[nameof(ExportType)] = value.To<string>(); }
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3754Key)]
@@ -78,8 +77,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(1)]
 			public DateTime StartFrom
 			{
-				get { return ExtensionInfo["StartFrom"].To<DateTime>(); }
-				set { ExtensionInfo["StartFrom"] = value.Ticks; }
+				get { return ExtensionInfo[nameof(StartFrom)].To<DateTime>(); }
+				set { ExtensionInfo[nameof(StartFrom)] = value.Ticks; }
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3754Key)]
@@ -89,8 +88,8 @@ namespace StockSharp.Hydra.Tools
 			[Editor(typeof(FolderBrowserEditor), typeof(FolderBrowserEditor))]
 			public string ExportFolder
 			{
-				get { return (string)ExtensionInfo["ExportFolder"]; }
-				set { ExtensionInfo["ExportFolder"] = value; }
+				get { return (string)ExtensionInfo[nameof(ExportFolder)]; }
+				set { ExtensionInfo[nameof(ExportFolder)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3754Key)]
@@ -99,8 +98,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(2)]
 			public int Offset
 			{
-				get { return ExtensionInfo["Offset"].To<int>(); }
-				set { ExtensionInfo["Offset"] = value; }
+				get { return ExtensionInfo[nameof(Offset)].To<int>(); }
+				set { ExtensionInfo[nameof(Offset)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.CandlesKey)]
@@ -110,8 +109,8 @@ namespace StockSharp.Hydra.Tools
 			[Editor(typeof(CandleSettingsEditor), typeof(CandleSettingsEditor))]
 			public CandleSeries CandleSettings
 			{
-				get { return (CandleSeries)ExtensionInfo["CandleSettings"]; }
-				set { ExtensionInfo["CandleSettings"] = value; }
+				get { return (CandleSeries)ExtensionInfo[nameof(CandleSettings)]; }
+				set { ExtensionInfo[nameof(CandleSettings)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3755Key)]
@@ -153,8 +152,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(1)]
 			public int BatchSize
 			{
-				get { return (int)ExtensionInfo["BatchSize"]; }
-				set { ExtensionInfo["BatchSize"] = value; }
+				get { return (int)ExtensionInfo[nameof(BatchSize)]; }
+				set { ExtensionInfo[nameof(BatchSize)] = value; }
 			}
 
 			[CategoryLoc(LocalizedStrings.Str3755Key)]
@@ -163,8 +162,8 @@ namespace StockSharp.Hydra.Tools
 			[PropertyOrder(2)]
 			public bool CheckUnique
 			{
-				get { return (bool)ExtensionInfo["CheckUnique"]; }
-				set { ExtensionInfo["CheckUnique"] = value; }
+				get { return (bool)ExtensionInfo[nameof(CheckUnique)]; }
+				set { ExtensionInfo[nameof(CheckUnique)] = value; }
 			}
 
 			[Category("CSV")]
@@ -173,8 +172,8 @@ namespace StockSharp.Hydra.Tools
 			[ExpandableObject]
 			public TemplateTxtRegistry TemplateTxtRegistry
 			{
-				get { return (TemplateTxtRegistry)ExtensionInfo["TemplateTxtRegistry"]; }
-				set { ExtensionInfo["TemplateTxtRegistry"] = value; }
+				get { return (TemplateTxtRegistry)ExtensionInfo[nameof(TemplateTxtRegistry)]; }
+				set { ExtensionInfo[nameof(TemplateTxtRegistry)] = value; }
 			}
 
 			[Category("CSV")]
@@ -182,8 +181,8 @@ namespace StockSharp.Hydra.Tools
 			[DescriptionLoc(LocalizedStrings.CsvHeaderKey, true)]
 			public string Header
 			{
-				get { return (string)ExtensionInfo["Header"]; }
-				set { ExtensionInfo["Header"] = value; }
+				get { return (string)ExtensionInfo[nameof(Header)]; }
+				set { ExtensionInfo[nameof(Header)] = value; }
 			}
 
 			public override HydraTaskSettings Clone()
@@ -315,8 +314,11 @@ namespace StockSharp.Hydra.Tools
 							case ExportTypes.Txt:
 								exporter = new TextExporter(security.Security, arg, isCancelled, fileName, GetTxtTemplate(dataType, arg), _settings.Header);
 								break;
-							case ExportTypes.Bin:
-								exporter = new BinExporter(security.Security, arg, isCancelled, DriveCache.Instance.GetDrive(path));
+							case ExportTypes.StockSharpBin:
+								exporter = new StockSharpExporter(security.Security, arg, isCancelled, DriveCache.Instance.GetDrive(path), StorageFormats.Binary);
+								break;
+							case ExportTypes.StockSharpCsv:
+								exporter = new StockSharpExporter(security.Security, arg, isCancelled, DriveCache.Instance.GetDrive(path), StorageFormats.Csv);
 								break;
 							default:
 								throw new ArgumentOutOfRangeException();

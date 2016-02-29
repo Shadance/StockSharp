@@ -23,7 +23,6 @@ namespace StockSharp.Studio.Controls
 
 	using StockSharp.Algo;
 	using StockSharp.BusinessEntities;
-	using StockSharp.Studio.Core;
 	using StockSharp.Studio.Core.Commands;
 	using StockSharp.Localization;
 
@@ -34,7 +33,7 @@ namespace StockSharp.Studio.Controls
 	{
 		#region Dependency properties
 
-		public static readonly DependencyProperty SubscribeNewsProperty = DependencyProperty.Register("SubscribeNews", typeof(bool), typeof(NewsPanel), new PropertyMetadata(SubscribeNewsChanged));
+		public static readonly DependencyProperty SubscribeNewsProperty = DependencyProperty.Register(nameof(SubscribeNews), typeof(bool), typeof(NewsPanel), new PropertyMetadata(SubscribeNewsChanged));
 
 		private static void SubscribeNewsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{

@@ -17,7 +17,6 @@ namespace StockSharp.Hydra.BitStamp
 {
 	using System.Security;
 
-	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 
@@ -45,34 +44,26 @@ namespace StockSharp.Hydra.BitStamp
 			public BitStampSettings(HydraTaskSettings settings)
 				: base(settings)
 			{
-				ExtensionInfo.TryAdd("Key", new SecureString());
-				ExtensionInfo.TryAdd("Secret", new SecureString());
 			}
 
-			/// <summary>
-			/// Ключ.
-			/// </summary>
 			[CategoryLoc(_sourceName)]
 			[DisplayNameLoc(LocalizedStrings.Str3304Key)]
 			[DescriptionLoc(LocalizedStrings.Str3304Key, true)]
 			[PropertyOrder(1)]
 			public SecureString Key
 			{
-				get { return (SecureString)ExtensionInfo["Key"]; }
-				set { ExtensionInfo["Key"] = value; }
+				get { return (SecureString)ExtensionInfo[nameof(Key)]; }
+				set { ExtensionInfo[nameof(Key)] = value; }
 			}
 
-			/// <summary>
-			/// Секрет.
-			/// </summary>
 			[CategoryLoc(_sourceName)]
 			[DisplayNameLoc(LocalizedStrings.Str3306Key)]
 			[DescriptionLoc(LocalizedStrings.Str3307Key)]
 			[PropertyOrder(2)]
 			public SecureString Secret
 			{
-				get { return (SecureString)ExtensionInfo["Secret"]; }
-				set { ExtensionInfo["Secret"] = value; }
+				get { return (SecureString)ExtensionInfo[nameof(Secret)]; }
+				set { ExtensionInfo[nameof(Secret)] = value; }
 			}
 		}
 

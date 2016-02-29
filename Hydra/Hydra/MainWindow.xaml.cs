@@ -44,7 +44,6 @@ namespace StockSharp.Hydra
 	using Ecng.Xaml;
 	using Ecng.Net;
 	using Ecng.Serialization;
-	using Ecng.Data;
 	using Ecng.Interop;
 
 	using StockSharp.Logging;
@@ -66,17 +65,17 @@ namespace StockSharp.Hydra
 
 	public partial class MainWindow : RibbonWindow, ILogListener
 	{
-		public readonly static RoutedCommand OpenLogCommand = new RoutedCommand();
-		public readonly static RoutedCommand TargetPlatformCommand = new RoutedCommand();
-		public readonly static RoutedCommand HelpCommand = new RoutedCommand();
-		public readonly static RoutedCommand AboutCommand = new RoutedCommand();
-		public readonly static RoutedCommand LogDirectoryCommand = new RoutedCommand();
-		public readonly static RoutedCommand CopyToBufferCommand = new RoutedCommand();
-		public readonly static RoutedCommand OpenPaneCommand = new RoutedCommand();
-		public readonly static RoutedCommand ImportPaneCommand = new RoutedCommand();
-		public readonly static RoutedCommand BoardsCommand = new RoutedCommand();
-		public readonly static RoutedCommand AnalyticsCommand = new RoutedCommand();
-		public readonly static RoutedCommand MemoryStatisticsCommand = new RoutedCommand();
+		public static readonly RoutedCommand OpenLogCommand = new RoutedCommand();
+		public static readonly RoutedCommand TargetPlatformCommand = new RoutedCommand();
+		public static readonly RoutedCommand HelpCommand = new RoutedCommand();
+		public static readonly RoutedCommand AboutCommand = new RoutedCommand();
+		public static readonly RoutedCommand LogDirectoryCommand = new RoutedCommand();
+		public static readonly RoutedCommand CopyToBufferCommand = new RoutedCommand();
+		public static readonly RoutedCommand OpenPaneCommand = new RoutedCommand();
+		public static readonly RoutedCommand ImportPaneCommand = new RoutedCommand();
+		public static readonly RoutedCommand BoardsCommand = new RoutedCommand();
+		public static readonly RoutedCommand AnalyticsCommand = new RoutedCommand();
+		public static readonly RoutedCommand MemoryStatisticsCommand = new RoutedCommand();
 
 		private class HydraEmailLogListener : EmailLogListener
 		{
@@ -141,6 +140,8 @@ namespace StockSharp.Hydra
 
 		private DispatcherTimer _updateStatusTimer;
 
+		private readonly SessionClient _sessionClient = new SessionClient();
+
 		private TrayIcon _trayIcon;
 
 		public long LoadedTrades { get; private set; }
@@ -155,29 +156,26 @@ namespace StockSharp.Hydra
 
 		private bool _isReseting;
 		private string _dbFile;
-        private Security SelectedSecurity
-        {
-            get
-            {
-                //                var wnd = DockSite.ActiveWindow as PaneWindow;
-                var wnd = DockSite.Children.OfType<PaneWindow>().FirstOr(null);
-                if (wnd == null)
-                    return null;
+		private Security SelectedSecurity
+		{
+			get
+			{
+				var wnd = DockSite.ActiveWindow as PaneWindow;
 
-                var taskPane = wnd.Pane as TaskPane;
+				var taskPane = wnd?.Pane as TaskPane;
 
-                if (taskPane == null)
-                    return null;
+				if (taskPane == null)
+					return null;
 
-                var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
-                return selectedSecurity == null ? null : selectedSecurity.TaskSecurity.Security;
-            }
-        }
-        public WindowState CurrentWindowState { get; set; }
+				var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
+				return selectedSecurity?.TaskSecurity.Security;
+			}
+		}
+		public WindowState CurrentWindowState { get; set; }
 
 		#region Dependency properties
 
-		public static readonly DependencyProperty HydraEntityRegistryProperty = DependencyProperty.Register("HydraEntityRegistry", typeof(HydraEntityRegistry), typeof(MainWindow));
+		public static readonly DependencyProperty HydraEntityRegistryProperty = DependencyProperty.Register(nameof(HydraEntityRegistry), typeof(HydraEntityRegistry), typeof(MainWindow));
 
 		public HydraEntityRegistry HydraEntityRegistry
 		{
@@ -185,7 +183,7 @@ namespace StockSharp.Hydra
 			set { SetValue(HydraEntityRegistryProperty, value); }
 		}
 
-		public static readonly DependencyProperty IsStartedProperty = DependencyProperty.Register("IsStarted", typeof(bool), typeof(MainWindow));
+		public static readonly DependencyProperty IsStartedProperty = DependencyProperty.Register(nameof(IsStarted), typeof(bool), typeof(MainWindow));
 
 		public bool IsStarted
 		{
@@ -239,6 +237,8 @@ namespace StockSharp.Hydra
 
 		private void MainWindowLoaded(object sender, RoutedEventArgs e)
 		{
+			_sessionClient.CreateSession(Products.Hydra);
+
 			BusyIndicator.BusyContent = LocalizedStrings.Str2941;
 			BusyIndicator.IsBusy = true;
 
@@ -279,14 +279,14 @@ namespace StockSharp.Hydra
 
                 try
                 {
-                    Tasks.AddRange(res.Result);
+				Tasks.AddRange(res.Result);
                 }
                 catch (Exception ex)
                 {
                     ex.LogError();
                 }
 
-                var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
+				var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
 /*				if (collectionView != null)
 				{
 					var view = (ListCollectionView)collectionView.View;
@@ -336,7 +336,7 @@ namespace StockSharp.Hydra
 						AddTasks(newTasks);
 				}
 			}, TaskScheduler.FromCurrentSynchronizationContext());
-		}
+			}
 
 		private void InitializeDataSource()
 		{
@@ -390,13 +390,12 @@ namespace StockSharp.Hydra
 				}
 			}
 
+			_sessionClient.CloseSession();
+
 			if (!_isReseting)
 			{
-				if (_entityRegistry != null)
-				{
 					// если что-то еще не "сбросилось" в БД
-					_entityRegistry.DelayAction.WaitFlush();
-				}
+				_entityRegistry?.DelayAction.WaitFlush();
 
 				// сервис не будет зарегистрирован, если приложение закрыто было при старте из TargetPlatformWindow
 				if (ConfigManager.IsServiceRegistered<IStorageRegistry>())
@@ -406,14 +405,9 @@ namespace StockSharp.Hydra
 				}
 			}
 
-			if (_trayIcon != null)
-				_trayIcon.Close();
-
-			if (_host != null)
-				_host.Close();
-
-			if (_mutex != null)
-				_mutex.ReleaseMutex();
+			_trayIcon?.Close();
+			_host?.Close();
+			_mutex?.ReleaseMutex();
 
 			base.OnClosing(e);
 		}
@@ -507,8 +501,7 @@ namespace StockSharp.Hydra
 			{
 				_timer.Stop();
 
-				if (_killTimer != null)
-					_killTimer.Stop();
+				_killTimer?.Stop();
 			}
 
 			if (_entityRegistry.Settings.AutoStop)
@@ -678,9 +671,9 @@ namespace StockSharp.Hydra
 			ResetLogsImages();
 		    LogToolWindow.IsActive = true;
             LogToolWindow.IsSelected = true;
-        }
+		}
 
-        private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
+		private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			Process.Start("http://stocksharp.com/doc/html/a720a275-440a-44ce-86e2-bcec2e0bc55f.htm");
 		}
@@ -781,13 +774,13 @@ namespace StockSharp.Hydra
 
                 case "selected_source":
                     task = CurrentSources.SelectedItem;
-			        if (task != null)
+					if (task != null)
 			        {
                         if (task.GetType() != typeof(IHydraTask))
                             throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
                         pane = EnsureTaskPane((IHydraTask) task);
 			        }
-			        break;
+					break;
 
 				case "transaction":
 					pane = new TransactionsPane { SelectedSecurity = SelectedSecurity };
@@ -798,18 +791,14 @@ namespace StockSharp.Hydra
                     var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 					{
 						var paneWnd = w as PaneWindow;
-
-						if (paneWnd == null)
-							return false;
-
-						return paneWnd.Pane is AllSecuritiesPane;
+						return paneWnd?.Pane is AllSecuritiesPane;
 					});
 
-			        if (wnd != null)
+					if (wnd != null)
 			        {
                         wnd.IsActive = true;
                     }
-                    else
+					else
 						pane = new AllSecuritiesPane();
 					break;
 			}
@@ -872,10 +861,7 @@ namespace StockSharp.Hydra
 			{
 				var pw = w as PaneWindow;
 
-				if (pw == null)
-					return false;
-
-				var importPane = pw.Pane as ImportPane;
+				var importPane = pw?.Pane as ImportPane;
 
 				if (importPane == null)
 					return false;
@@ -883,10 +869,10 @@ namespace StockSharp.Hydra
 				return importPane.DataType == dataType && importPane.ExecutionType == execType;
 			});
 
-		    if (importWnd != null)
+			if (importWnd != null)
 		        importWnd.IsActive = true;
 
-		    else
+			else
 		        ShowPane(new ImportPane {ExecutionType = execType, DataType = dataType});
 		}
 
@@ -957,11 +943,7 @@ namespace StockSharp.Hydra
 			var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
 			{
 				var paneWnd = w as PaneWindow;
-
-				if (paneWnd == null)
-					return false;
-
-				return paneWnd.Pane is ExchangeBoardPane;
+				return paneWnd?.Pane is ExchangeBoardPane;
 			});
 
 			if (wnd != null)
@@ -1040,13 +1022,7 @@ namespace StockSharp.Hydra
 		{
 			var paneWnd = e.Window as PaneWindow;
 
-			if (paneWnd == null)
-				return;
-
-			if (paneWnd.Pane == null)
-				return;
-
-			paneWnd.Pane.Dispose();
+			paneWnd?.Pane?.Dispose();
 
 			//if (!paneWnd.Pane.InProcess)
 			//	return;
@@ -1072,10 +1048,7 @@ namespace StockSharp.Hydra
 		{
 			var wnd = e.Window as PaneWindow;
 
-			if (wnd == null) 
-				return;
-
-			var taskPane = wnd.Pane as TaskPane;
+			var taskPane = wnd?.Pane as TaskPane;
 
 			if (taskPane == null)
 				return;
@@ -1090,7 +1063,7 @@ namespace StockSharp.Hydra
 */
 		private void ProxySettings_Click(object sender, RoutedEventArgs e)
 		{
-			BaseApplication.EditProxySettigs();
+			BaseApplication.EditProxySettings(this);
 		}
 
 		void IDisposable.Dispose()
@@ -1109,7 +1082,7 @@ namespace StockSharp.Hydra
         {
             var textFormattingMode = e.NewValue > 1.0 || Math.Abs(e.NewValue - 1.0) < double.Epsilon ? TextFormattingMode.Ideal : TextFormattingMode.Display;
             TextOptions.SetTextFormattingMode(this, textFormattingMode);
-        }
+		}
 
-    }
+	}
 }

@@ -234,9 +234,8 @@ namespace StockSharp.Algo.Testing
 
 			HistoryMessageAdapter = new HistoryMessageAdapter(TransactionIdGenerator, securityProvider) { StorageRegistry = storageRegistry };
 
-			// todo setup adapter.
-			//InMessageChannel = new HistoryEmulationMessageChannel(HistoryMessageAdapter, SendOutError);
-			//OutMessageChannel = new PassThroughMessageChannel();
+			InMessageChannel = new HistoryEmulationMessageChannel(HistoryMessageAdapter, SendOutError);
+			OutMessageChannel = new PassThroughMessageChannel();
 
 			Adapter = new HistoryBasketMessageAdapter(this);
 			Adapter.InnerAdapters.Add(EmulationAdapter);
