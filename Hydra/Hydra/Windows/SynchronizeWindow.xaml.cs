@@ -258,5 +258,10 @@ namespace StockSharp.Hydra.Windows
 				_token = null;
 			});
 		}
-	}
+
+        public void Dispose()
+        {
+            _token.Dispose();
+        }
+    }
 }

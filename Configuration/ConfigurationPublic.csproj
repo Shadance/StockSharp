@@ -159,7 +159,7 @@
       <Name>Oanda</Name>
     </ProjectReference>
     <ProjectReference Include="..\Connectors\OpenECry\OpenECry.csproj">
-      <Project>{17EAE926-C9A9-40C7-8D54-3545077B4AB7}</Project>
+      <Project>{17eae926-c9a9-40c7-8d54-3545077b4ab7}</Project>
       <Name>OpenECry</Name>
     </ProjectReference>
     <ProjectReference Include="..\Connectors\Quik\QuikPublic.csproj">

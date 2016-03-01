@@ -113,37 +113,7 @@ namespace StockSharp.Hydra
 					root.SetValue("DriveCache", DriveCache.Instance.Save());
 					root.SetValue("DatabaseConnectionCache", DatabaseConnectionCache.Instance.Save());
 
-					var mainWindow = new SettingsStorage();
-
-					mainWindow.SetValue("Width", MainWindow.Width);
-					mainWindow.SetValue("Height", MainWindow.Height);
-					mainWindow.SetValue("Location", MainWindow.GetLocation());
-					mainWindow.SetValue("WindowState", MainWindow.WindowState);
-
-					root.SetValue("mainWindow", mainWindow);
-
-					var navBar = new SettingsStorage();
-
-					navBar.SetValue("SelectedSource", MainWindow.CurrentSources.SelectedIndex);
-					navBar.SetValue("SelectedTool", MainWindow.CurrentTools.SelectedIndex);
-
-					root.SetValue("navBar", navBar);
-
-					var panes = new List<SettingsStorage>();
-
-					foreach (var paneWnd in MainWindow.DockSite.Children.OfType<PaneWindow>())
-					{
-						var pane = paneWnd.Pane;
-
-						if (!pane.IsValid)
-							continue;
-
-						var settings = pane.SaveEntire(false);
-						settings.SetValue("isActive", paneWnd.IsActive);
-						panes.Add(settings);
-					}
-
-					root.SetValue("panes", panes);
+                    root.SetValue("mainWindow", MainWindow.Save());
 
 					new XmlSerializer<SettingsStorage>().Serialize(root, _configFile);
 
@@ -178,14 +148,6 @@ namespace StockSharp.Hydra
 				var dbSettings = _settings.GetValue<SettingsStorage>("DatabaseConnectionCache");
 				if (dbSettings != null)
 					DatabaseConnectionCache.Instance.Load(dbSettings);
-
-				var wnd = _settings.GetValue<SettingsStorage>("mainWindow");
-				MainWindow.Width = wnd.GetValue<double>("Width");
-				MainWindow.Height = wnd.GetValue<double>("Height");
-				MainWindow.SetLocation(wnd.GetValue<Point<int>>("Location"));
-				MainWindow.WindowState = wnd.GetValue<WindowState>("WindowState");
-
-				var navBar = _settings.GetValue<SettingsStorage>("navBar");
 			}
 			catch (Exception ex)
 			{
@@ -203,46 +165,9 @@ namespace StockSharp.Hydra
 				if (_settings == null)
 					return;
 
-				var navBar = _settings.GetValue<SettingsStorage>("navBar");
-				MainWindow.CurrentSources.SelectedIndex = navBar.GetValue<int>("SelectedSource");
-				MainWindow.CurrentTools.SelectedIndex = navBar.GetValue<int?>("SelectedTool") ?? navBar.GetValue<int>("SelectedConverter");
-
-				var panes = _settings.GetValue<IEnumerable<SettingsStorage>>("panes").ToArray();
-				var wnds = MainWindow.DockSite.Children.OfType<PaneWindow>().ToArray();
-
-				// почему-то после загрузки разметки устанавливается в MainWindow
-				wnds.ForEach(w => w.Pane = null);
-
-				var len = wnds.Length.Min(panes.Length);
-
-				PaneWindow activeWnd = null;
-
-				for (var i = 0; i < len; i++)
-				{
-					try
-					{
-						var wnd = wnds[i];
-
-						wnd.Pane = panes[i].LoadEntire<IPane>();
-
-						if (wnd.Pane.IsValid)
-						{
-							if (panes[i].GetValue<bool>("isActive"))
-								activeWnd = wnd;
-						}
-						else
-							wnd.Pane = null;
-					}
-					catch (Exception ex)
-					{
-						ex.LogError();
-					}
-				}
-
-				wnds.Where(w => w.Pane == null).ForEach(w => w.Close());
-
-				if (activeWnd != null)
-					activeWnd.IsActive = true;
+                var mwSettings = _settings.GetValue<SettingsStorage>("mainWindow");
+                if (mwSettings != null)
+                    MainWindow.Load(mwSettings);
 			}
 			catch (Exception ex)
 			{

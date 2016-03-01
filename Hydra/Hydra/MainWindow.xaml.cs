@@ -16,7 +16,9 @@ Copyright 2010 by StockSharp, LLC
 
 using System.Collections;
 using System.Windows.Media;
+using Ecng.ComponentModel;
 using Fluent;
+using Xceed.Wpf.Toolkit;
 
 namespace StockSharp.Hydra
 {
@@ -160,15 +162,9 @@ namespace StockSharp.Hydra
 		{
 			get
 			{
-				var wnd = DockSite.ActiveWindow as PaneWindow;
-
-				var taskPane = wnd?.Pane as TaskPane;
-
-				if (taskPane == null)
-					return null;
-
-				var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
-				return selectedSecurity?.TaskSecurity.Security;
+			    var wnd = _FindPaneWindow<TaskPane>(p => true);
+                var selectedSecurity = (wnd.Pane as TaskPane)?.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
+                return selectedSecurity?.TaskSecurity.Security;
 			}
 		}
 		public WindowState CurrentWindowState { get; set; }
@@ -412,7 +408,7 @@ namespace StockSharp.Hydra
 			base.OnClosing(e);
 		}
 
-		private void CheckIsRunning()
+	    private void CheckIsRunning()
 		{
 			var settings = ConfigurationManager.ConnectionStrings;
 			var connectionStrings = (settings.Cast<ConnectionStringSettings>().Select(setting => setting.ConnectionString)).ToArray();
@@ -762,45 +758,26 @@ namespace StockSharp.Hydra
 					pane = new NewsPane();
 					break;
 
-                case "selected_task":
-                    var task = CurrentTools.SelectedItem;
+                case "task":
+			        var lvi = e.OriginalSource as System.Windows.Controls.ListViewItem;
+                    var task = lvi?.DataContext as IHydraTask;
 			        if (task != null)
-			        {
-			            if (task.GetType() != typeof (IHydraTask))
-			                throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
-			            pane = EnsureTaskPane((IHydraTask) task);
-			        }
+    	                pane = EnsureTaskPane((IHydraTask) task);
 			        break;
-
-                case "selected_source":
-                    task = CurrentSources.SelectedItem;
-					if (task != null)
-			        {
-                        if (task.GetType() != typeof(IHydraTask))
-                            throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
-                        pane = EnsureTaskPane((IHydraTask) task);
-			        }
-					break;
 
 				case "transaction":
 					pane = new TransactionsPane { SelectedSecurity = SelectedSecurity };
 					break;
 					
 				case "security":
-//                    var wnd = DockSite.DocumentWindows.FirstOrDefault(w =>
-                    var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-					{
-						var paneWnd = w as PaneWindow;
-						return paneWnd?.Pane is AllSecuritiesPane;
-					});
-
+			        var wnd = _FindPaneWindow<AllSecuritiesPane>(p => true);
 					if (wnd != null)
-			        {
                         wnd.IsActive = true;
-                    }
 					else
 						pane = new AllSecuritiesPane();
 					break;
+                default:
+                        throw new Exception("ExecutedOpenPaneCommand with unsupported parameter: " + e.Parameter.ToString());
 			}
 
 			if (pane == null)
@@ -857,17 +834,9 @@ namespace StockSharp.Hydra
 					throw new ArgumentOutOfRangeException(nameof(e), param, LocalizedStrings.Str1655);
 			}
 
-			var importWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-			{
-				var pw = w as PaneWindow;
-
-				var importPane = pw?.Pane as ImportPane;
-
-				if (importPane == null)
-					return false;
-
-				return importPane.DataType == dataType && importPane.ExecutionType == execType;
-			});
+		    var importWnd =
+		        _FindPaneWindow<ImportPane>(
+		            importPane => importPane?.DataType == dataType && importPane?.ExecutionType == execType);
 
 			if (importWnd != null)
 		        importWnd.IsActive = true;
@@ -940,13 +909,8 @@ namespace StockSharp.Hydra
 
 		private void ExecutedBoardsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-			{
-				var paneWnd = w as PaneWindow;
-				return paneWnd?.Pane is ExchangeBoardPane;
-			});
-
-			if (wnd != null)
+		    var wnd = _FindPaneWindow<ExchangeBoardPane>(p => true);
+            if (wnd != null)
 				wnd.IsActive = true;
 			else
 				ShowPane(new ExchangeBoardPane());
@@ -955,16 +919,6 @@ namespace StockSharp.Hydra
 		private void ExecutedAnalyticsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			ShowPane(new AnalyticsPane());
-		}
-
-		public void ShowPane(IPane pane)
-		{
-			if (pane == null)
-				throw new ArgumentNullException(nameof(pane));
-
-			var wnd = new PaneWindow { Pane = pane };
-            DockSite.Children.Add(wnd);
-			wnd.IsActive = true;
 		}
 
 		private void ExecutedMemoryStatisticsCommand(object sender, ExecutedRoutedEventArgs e)
@@ -1010,66 +964,96 @@ namespace StockSharp.Hydra
 			}
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		public void Load(SettingsStorage settings)
 		{
+		    Height = settings.GetValue<double>(nameof(Height));
+		    Width = settings.GetValue<double>(nameof(Width));
+            this.SetLocation(settings.GetValue<Point<int>>("Location"));
+		    WindowState = settings.GetValue<WindowState>(nameof(WindowState));
+
+            var navBar = settings.GetValue<SettingsStorage>("navBar");
+
+            int? idx = null;
+            idx = navBar.GetValue<int?>("SelectedSource");
+            if (idx.HasValue && CurrentSources.Items.Count > idx)
+                CurrentSources.SelectedIndex = idx.Value;
+
+            idx = navBar.GetValue<int?>("SelectedTool") ?? navBar.GetValue<int?>("SelectedConverter");
+            if (idx.HasValue && CurrentTools.Items.Count > idx)
+                CurrentTools.SelectedIndex = idx.Value;
+            
+            var panes = settings.GetValue<SettingsStorage>("Panes");
+            _LoadPanes(panes);
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+        public void Save(SettingsStorage settings)
 		{
-		}
+            settings.SetValue(nameof(Width), Width);
+            settings.SetValue(nameof(Height), Height);
+            settings.SetValue("Location", this.GetLocation());
+            settings.SetValue(nameof(WindowState), WindowState);
 
-/*		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
-		{
-			var paneWnd = e.Window as PaneWindow;
+            var navBar = new SettingsStorage();
+            navBar.SetValue("SelectedSource",   CurrentSources.SelectedIndex);
+            navBar.SetValue("SelectedTool",     CurrentTools.SelectedIndex);
+            settings.SetValue("navBar", navBar);
+            settings.SetValue("Panes", _SavePanes());
+        }
 
-			paneWnd?.Pane?.Dispose();
+        /*		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
+                {
+                    var paneWnd = e.Window as PaneWindow;
 
-			//if (!paneWnd.Pane.InProcess)
-			//	return;
+                    paneWnd?.Pane?.Dispose();
 
-			//new MessageBoxBuilder()
-			//	.Text("Закладка '{0}' в процессе работы и ее невозможно закрыть.".Put(paneWnd.Pane.Title))
-			//	.Warning()
-			//	.Owner(this)
-			//	.Show();
+                    //if (!paneWnd.Pane.InProcess)
+                    //	return;
 
-			//e.Cancel = true;
-		}
+                    //new MessageBoxBuilder()
+                    //	.Text("Закладка '{0}' в процессе работы и ее невозможно закрыть.".Put(paneWnd.Pane.Title))
+                    //	.Warning()
+                    //	.Owner(this)
+                    //	.Show();
 
-		private void DockSite_OnWindowClosed(object sender, DockingWindowEventArgs e)
-		{
-			if (e.Window.Name == "LogToolWindow")
-				return;
+                    //e.Cancel = true;
+                }
 
-			DockSite.Children.Remove((DocumentWindow)e.Window);
-		}*/
+                private void DockSite_OnWindowClosed(object sender, DockingWindowEventArgs e)
+                {
+                    if (e.Window.Name == "LogToolWindow")
+                        return;
 
-/*		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
-		{
-			var wnd = e.Window as PaneWindow;
+                    DockSite.Children.Remove((DocumentWindow)e.Window);
+                }*/
 
-			var taskPane = wnd?.Pane as TaskPane;
+        /*		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
+                {
+                    var wnd = e.Window as PaneWindow;
 
-			if (taskPane == null)
-				return;
+                    var taskPane = wnd?.Pane as TaskPane;
 
-			var task = taskPane.Task;
+                    if (taskPane == null)
+                        return;
 
-			var lv = task.IsCategoryOf(TaskCategories.Tool) ? CurrentTools : CurrentSources;
+                    var task = taskPane.Task;
 
-			lv.ScrollIntoView(task);
-			lv.SelectedItem = task;
-		}
-*/
-		private void ProxySettings_Click(object sender, RoutedEventArgs e)
+                    var lv = task.IsCategoryOf(TaskCategories.Tool) ? CurrentTools : CurrentSources;
+
+                    lv.ScrollIntoView(task);
+                    lv.SelectedItem = task;
+                }
+        */
+        private void ProxySettings_Click(object sender, RoutedEventArgs e)
 		{
 			BaseApplication.EditProxySettings(this);
 		}
 
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
-            _emailListener.Dispose();
-
+            _emailListener.DoDispose();
+            _killTimer.DoDispose();
+            _sessionClient.DoDispose();
+            _host.DoDispose();
 		}
 
  /*       private void CurrentTasks_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

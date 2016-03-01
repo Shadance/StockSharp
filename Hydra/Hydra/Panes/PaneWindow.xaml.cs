@@ -13,6 +13,9 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
+using Ecng.Serialization;
+
 namespace StockSharp.Hydra.Panes
 {
 	public partial class PaneWindow
@@ -28,5 +31,5 @@ namespace StockSharp.Hydra.Panes
 			get { return (IPane)_dataContext; }
 			set { _dataContext = value; }
 		}
-	}
+    }
 }

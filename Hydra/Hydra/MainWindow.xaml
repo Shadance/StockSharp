@@ -310,6 +310,7 @@
                 <componentModel:SortDescription PropertyName="Settings.IsEnabled" Direction="Descending"/>
             </ex:AutoRefreshCollectionViewSource.SortDescriptions>
         </ex:AutoRefreshCollectionViewSource>
+        
     </fluent:RibbonWindow.Resources>
 
     <fluent:RibbonWindow.CommandBindings>
@@ -472,7 +473,7 @@
 
             </fluent:StatusBar>
 
-            <xcad:DockingManager Height="Auto" Width="Auto" x:Name="Docking" >
+            <xcad:DockingManager Height="Auto" Width="Auto" x:Name="Docking" DocumentsSource="{Binding Path=MyPanes }">
                 <xcad:DockingManager.Theme>
                     <xcad:VS2010Theme/>
                 </xcad:DockingManager.Theme>
@@ -504,7 +505,7 @@
                     <xcad:LayoutPanel Orientation="Horizontal">
                         <xcad:LayoutAnchorablePaneGroup DockWidth="200" Orientation="Vertical" >
                             <xcad:LayoutAnchorablePane>
-                                <xcad:LayoutAnchorable Title="{x:Static loc:LocalizedStrings.XamlStr227}" CanAutoHide="True" CanClose="False" CanFloat="True">
+                                <xcad:LayoutAnchorable x:Name="LayoutAnchorableSources" Title="{x:Static loc:LocalizedStrings.XamlStr227}" CanAutoHide="True" CanClose="False" CanFloat="True"  CanHide="False">
                                     <DockPanel>
                                         <ListView x:Name="CurrentSources"
                                                           ItemContainerStyle="{StaticResource TaskListViewItemStyle}"
@@ -530,7 +531,7 @@
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorablePane>
-                                <xcad:LayoutAnchorable Title="{x:Static loc:LocalizedStrings.XamlStr166}" CanAutoHide="True" CanClose="False" CanFloat="True">
+                                <xcad:LayoutAnchorable x:Name="LayoutAnchorableTasks" Title="{x:Static loc:LocalizedStrings.XamlStr166}" CanAutoHide="True" CanClose="False" CanFloat="True" CanHide="False">
                                     <DockPanel>
                                         <ListView x:Name="CurrentTools" ItemContainerStyle="{StaticResource TaskListViewItemStyle}"
 													ItemsSource="{Binding Source={StaticResource SortedTools}}"
@@ -556,10 +557,7 @@
                         </xcad:LayoutAnchorablePaneGroup>
 
                         <xcad:LayoutDocumentPaneGroup>
-                            <xcad:LayoutDocumentPane x:Name="DockSite">
-                                <xcad:LayoutDocument Title="Doc1">
-                                    <TextBox/>
-                                </xcad:LayoutDocument>
+                            <xcad:LayoutDocumentPane>
                                 <xcad:LayoutDocument Title="{x:Static loc:LocalizedStrings.Str3237}" x:Name="LogToolWindow" CanClose="False" CanFloat="True">
                                     <sx:Monitor x:Name="MonitorControl" ShowStrategies="False" />
                                 </xcad:LayoutDocument>
