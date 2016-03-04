@@ -333,8 +333,9 @@ namespace StockSharp.Hydra
 				{
 					if (res)
 					{
-                        var wnd = _FindPaneWindow<TaskPane>(pane => pane.Task == task);
-						wnd?.Close();
+                        var wnd = _FindPane<TaskPane>(pane => pane.Task == task);
+						if (wnd != null)
+                            wnd.Close();
 						Tasks.Remove(task);
 					}
 

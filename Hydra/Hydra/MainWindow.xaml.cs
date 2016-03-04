@@ -38,8 +38,6 @@ namespace StockSharp.Hydra
 	using System.Windows.Threading;
 	using Timer = System.Timers.Timer;
 
-	//using ActiproSoftware.Windows.Controls.Docking;
-
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Configuration;
@@ -162,8 +160,8 @@ namespace StockSharp.Hydra
 		{
 			get
 			{
-			    var wnd = _FindPaneWindow<TaskPane>(p => true);
-                var selectedSecurity = (wnd.Pane as TaskPane)?.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
+			    var wnd = _FindPane<TaskPane>(p => true);
+                var selectedSecurity = (wnd.Content as TaskPane)?.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
                 return selectedSecurity?.TaskSecurity.Security;
 			}
 		}
@@ -199,7 +197,9 @@ namespace StockSharp.Hydra
 
 			InitializeComponent();
 
-			_logManager.Listeners.Add(new GuiLogListener(MonitorControl));
+
+            var logwnd = _FindPane<LogsPane>(w => true) ?? ShowPane(new LogsPane());            
+            _logManager.Listeners.Add(new GuiLogListener((logwnd.Content as LogsPane).MonitorControl));
 			_logManager.Listeners.Add(this);
 
 			_emailListener = new HydraEmailLogListener(this);
@@ -665,9 +665,18 @@ namespace StockSharp.Hydra
 		private void ExecutedOpenLogCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			ResetLogsImages();
-		    LogToolWindow.IsActive = true;
-            LogToolWindow.IsSelected = true;
-		}
+		    var wnd = _FindPane<LogsPane>(w => true);
+		    if (wnd == null)
+		    {
+                wnd = ShowPane(new LogsPane());
+                _logManager.Listeners.Add(new GuiLogListener((wnd.Content as LogsPane).MonitorControl));
+		    }
+		    else
+		    {
+                wnd.IsActive = true;
+                wnd.IsSelected = true;
+            }
+        }
 
 		private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
 		{
@@ -770,7 +779,7 @@ namespace StockSharp.Hydra
 					break;
 					
 				case "security":
-			        var wnd = _FindPaneWindow<AllSecuritiesPane>(p => true);
+			        var wnd = _FindPane<AllSecuritiesPane>(p => true);
 					if (wnd != null)
                         wnd.IsActive = true;
 					else
@@ -835,7 +844,7 @@ namespace StockSharp.Hydra
 			}
 
 		    var importWnd =
-		        _FindPaneWindow<ImportPane>(
+                _FindPane<ImportPane>(
 		            importPane => importPane?.DataType == dataType && importPane?.ExecutionType == execType);
 
 			if (importWnd != null)
@@ -909,7 +918,7 @@ namespace StockSharp.Hydra
 
 		private void ExecutedBoardsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-		    var wnd = _FindPaneWindow<ExchangeBoardPane>(p => true);
+		    var wnd = _FindPane<ExchangeBoardPane>(p => true);
             if (wnd != null)
 				wnd.IsActive = true;
 			else
@@ -1061,12 +1070,6 @@ namespace StockSharp.Hydra
 
         }
 */
-
-        private void ZoomSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            var textFormattingMode = e.NewValue > 1.0 || Math.Abs(e.NewValue - 1.0) < double.Epsilon ? TextFormattingMode.Ideal : TextFormattingMode.Display;
-            TextOptions.SetTextFormattingMode(this, textFormattingMode);
-		}
-
+ 
 	}
 }

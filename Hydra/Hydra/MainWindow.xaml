@@ -5,7 +5,6 @@
 		xmlns:hydra="clr-namespace:StockSharp.Hydra"
 		xmlns:ex="clr-namespace:Ecng.Xaml;assembly=Ecng.Xaml" 
 		xmlns:core="clr-namespace:StockSharp.Hydra.Core;assembly=StockSharp.Hydra.Core" 
-		xmlns:sx="clr-namespace:StockSharp.Xaml;assembly=StockSharp.Xaml"
 		xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
 		xmlns:controls1="clr-namespace:wyDay.Controls;assembly=AutomaticUpdaterWPF"
 		xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
@@ -378,17 +377,9 @@
                     <fluent:RibbonGroupBox d:LayoutOverrides="Height">
                         <fluent:ToggleButton x:Name="StartStop" Click="StartStopClick" Width="100" Height="29" Margin="2,2,2,2" HorizontalContentAlignment="Center" Content="{x:Static loc:LocalizedStrings.Str2421}" Style="{StaticResource ToggleButtonStyle}"/>
                     </fluent:RibbonGroupBox>
-                    <fluent:RibbonGroupBox d:LayoutOverrides="Height">
-                        <fluent:MenuItem Command="{x:Static hydra:MainWindow.AddSourcesCommand}">
-                            <fluent:MenuItem.Header>
-                                <TextBlock><Run Text="{x:Static loc:LocalizedStrings.XamlStr140}"/><Run Text="..."/></TextBlock>
-                            </fluent:MenuItem.Header>
-                        </fluent:MenuItem>
-                        <fluent:MenuItem Command="{x:Static hydra:MainWindow.AddToolsCommand}">
-                            <fluent:MenuItem.Header>
-                                <TextBlock><Run Text="{x:Static loc:LocalizedStrings.XamlStr136}"/><Run Text="..."/></TextBlock>
-                            </fluent:MenuItem.Header>
-                        </fluent:MenuItem>
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" Header="{x:Static loc:LocalizedStrings.XamlStr166}">
+                        <fluent:MenuItem Command="{x:Static hydra:MainWindow.AddSourcesCommand}" Header="{x:Static loc:LocalizedStrings.XamlStr140}" />
+                        <fluent:MenuItem Command="{x:Static hydra:MainWindow.AddToolsCommand}" Header="{x:Static loc:LocalizedStrings.XamlStr136}" />
                     </fluent:RibbonGroupBox>
                     <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small" Header="{x:Static loc:LocalizedStrings.Str3237}">
                         <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr106}" Command="{x:Static hydra:MainWindow.OpenLogCommand}" />
@@ -396,8 +387,14 @@
                         <fluent:MenuItem x:Name="MemoryStatMenuItem" Header="{x:Static loc:LocalizedStrings.MemoryStatistics}" Command="{x:Static hydra:MainWindow.MemoryStatisticsCommand}"/>
                     </fluent:RibbonGroupBox>
                     <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Str2121}">
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2835}" Command="{x:Static hydra:MainWindow.OpenPaneCommand}" CommandParameter="Security"/>
                         <fluent:MenuItem x:Name="Analytics" Header="{x:Static loc:LocalizedStrings.Str1221}" Command="{x:Static hydra:MainWindow.AnalyticsCommand}" />
                         <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.Str2831}" Command="{x:Static hydra:MainWindow.BoardsCommand}" />
+                    </fluent:RibbonGroupBox>
+
+                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Help}">
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.OnlineDoc}" Command="{x:Static hydra:MainWindow.HelpCommand}"/>
+                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.About}" Command="{x:Static hydra:MainWindow.AboutCommand}" />
                     </fluent:RibbonGroupBox>
 
                 </fluent:RibbonTabItem>
@@ -439,13 +436,6 @@
                         <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.XamlStr610}" x:Name="MnuTargetPlatform" Command="{x:Static hydra:MainWindow.TargetPlatformCommand}"/>
                     </fluent:RibbonGroupBox>
                 </fluent:RibbonTabItem>
-                <fluent:RibbonTabItem HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="{x:Static loc:LocalizedStrings.Help}">
-                    <fluent:RibbonGroupBox d:LayoutOverrides="Height" State="Small"  Header="{x:Static loc:LocalizedStrings.Help}">
-                                <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.OnlineDoc}" Command="{x:Static hydra:MainWindow.HelpCommand}"/>
-                        <fluent:MenuItem Header="{x:Static loc:LocalizedStrings.About}" Command="{x:Static hydra:MainWindow.AboutCommand}" />
-                    </fluent:RibbonGroupBox>
-                </fluent:RibbonTabItem>
-
             </fluent:Ribbon>
 
             <fluent:RibbonTitleBar Header="RibbonTitleBar" VerticalAlignment="Top" DockPanel.Dock="Top">
@@ -457,7 +447,7 @@
             <fluent:StatusBar   HorizontalAlignment="Stretch" Margin="0" DockPanel.Dock="Bottom" Height="30" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <fluent:StatusBarItem>
                     <StackPanel Width="800" Height="30" Orientation="Horizontal" Margin="5,0,0,0">
-                        <TextBlock x:Name="Status" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="Status" VerticalAlignment="Center" Text="Status Line"/>
                         <ex:BmpImage x:Name="LastWarnError" Margin="2" Source="pack://application:,,,/StockSharp.Xaml;component/Images/warning_16x16.png" Width="16" Height="16" VerticalAlignment="Center" Visibility="Collapsed" />
                         <ex:BmpImage x:Name="LastLogError" Margin="2" Source="pack://application:,,,/StockSharp.Xaml;component/Images/error_16x16.png" Width="16" Height="16" VerticalAlignment="Center" Visibility="Collapsed" />
                         <Label VerticalContentAlignment="Center" x:Name="LastLogMessageCtrl" Height="25" ToolTip="{Binding Content, RelativeSource={RelativeSource Self}}">
@@ -473,10 +463,19 @@
 
             </fluent:StatusBar>
 
-            <xcad:DockingManager Height="Auto" Width="Auto" x:Name="Docking" DocumentsSource="{Binding Path=MyPanes }">
+            <xcad:DockingManager Height="Auto" Width="Auto" x:Name="Docking" >
+                <!-- DocumentsSource="{Binding Source=MyPanes}" -->
                 <xcad:DockingManager.Theme>
-                    <xcad:VS2010Theme/>
+                    <xcad:MetroTheme/>
                 </xcad:DockingManager.Theme>
+                <xcad:DockingManager.DocumentHeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding IconSource }" Margin="0,0,4,0" Width="12" Height="12"/>
+                            <TextBlock Text="{Binding Title }" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </xcad:DockingManager.DocumentHeaderTemplate>
                 <!-- xcad:DockingManager.DocumentContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Close" 
@@ -504,8 +503,11 @@
                 <xcad:LayoutRoot>
                     <xcad:LayoutPanel Orientation="Horizontal">
                         <xcad:LayoutAnchorablePaneGroup DockWidth="200" Orientation="Vertical" >
-                            <xcad:LayoutAnchorablePane>
-                                <xcad:LayoutAnchorable x:Name="LayoutAnchorableSources" Title="{x:Static loc:LocalizedStrings.XamlStr227}" CanAutoHide="True" CanClose="False" CanFloat="True"  CanHide="False">
+                            <xcad:LayoutAnchorablePane x:Name="LayoutToolsWindow">
+                                <xcad:LayoutAnchorable x:Name="LayoutAnchorableSources"
+                                                       Title="{x:Static loc:LocalizedStrings.XamlStr227}"
+                                                       CanAutoHide="True" CanHide="False" CanClose="False"
+                                                       CanFloat="False">
                                     <DockPanel>
                                         <ListView x:Name="CurrentSources"
                                                           ItemContainerStyle="{StaticResource TaskListViewItemStyle}"
@@ -555,14 +557,8 @@
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                         </xcad:LayoutAnchorablePaneGroup>
-
-                        <xcad:LayoutDocumentPaneGroup>
-                            <xcad:LayoutDocumentPane>
-                                <xcad:LayoutDocument Title="{x:Static loc:LocalizedStrings.Str3237}" x:Name="LogToolWindow" CanClose="False" CanFloat="True">
-                                    <sx:Monitor x:Name="MonitorControl" ShowStrategies="False" />
-                                </xcad:LayoutDocument>
-                            </xcad:LayoutDocumentPane>
-                        </xcad:LayoutDocumentPaneGroup>
+                        <xcad:LayoutDocumentPane x:Name="DocumentPane">
+                        </xcad:LayoutDocumentPane>
                     </xcad:LayoutPanel>
                 </xcad:LayoutRoot>
             </xcad:DockingManager>

@@ -1,31 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Ecng.Common;
 using Ecng.ComponentModel;
 using Ecng.Serialization;
 using StockSharp.Hydra.Core;
 using StockSharp.Hydra.Panes;
 using Xceed.Wpf.AvalonDock;
+using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace StockSharp.Hydra
 {
     public partial class MainWindow
     {
-        public ObservableCollection<PaneWindow> MyPanes { get; } = new ObservableCollection<PaneWindow>();
+        /// <summary>
+        /// Содержит все модальные окна типа PaneWindow (LayoutDocument)
+        /// </summary>
+//        public static ObservableCollection<LayoutDocument> MyPanes { get; } = new ObservableCollection<LayoutDocument>();
 
-        public void ShowPane(IPane pane)
+        public LayoutDocument ShowPane(IPane pane)
         {
             if (pane == null)
                 throw new ArgumentNullException(nameof(pane));
 
-            var wnd = new PaneWindow { Pane = pane };
-            MyPanes.Add(wnd);
+            var wnd = new LayoutDocument
+            {
+                Title = pane.Title,
+                ToolTip = pane.Title,
+                Description = nameof(pane) + " " + pane.Title,
+                CanClose = true,
+                CanFloat = true
+            };
+
+            if (!pane.Icon.IsNull())
+            {
+                // Create the source
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = pane.Icon;
+                img.EndInit();
+                wnd.IconSource = img;
+            }
+
+            wnd.Content = pane;
+
+            DocumentPane.Children.Add(wnd);
             wnd.IsActive = true;
+            return wnd;
         }
 
         //
@@ -50,26 +81,26 @@ namespace StockSharp.Hydra
         // Исключения:
         //   T:System.ArgumentNullException:
         //     Значение параметра source или predicate — null.
-        private PaneWindow _FindPaneWindow<TSource>(Func<TSource, bool> predicate)
+        private LayoutContent _FindPane<TSource>(Func<TSource, bool> predicate)
         {
-            return MyPanes.FirstOrDefault(pw => (pw?.Pane is TSource) && predicate((TSource)pw.Pane));
+            return DocumentPane.Children.FirstOrDefault(pw => (pw?.Content is TSource) && predicate( (TSource)pw.Content ));
         }
 
         private TaskPane EnsureTaskPane(IHydraTask task)
         {
-            var wnd = _FindPaneWindow<TaskPane>(pw => pw?.Task == task);
+            var wnd = _FindPane<TaskPane>(pw => pw?.Task == task);
             if (wnd != null)
             {
                 wnd.IsActive = true;
                 return null;
             }
-            else
-                return new TaskPane { Task = task };
+
+            return new TaskPane { Task = task };
         }
 
         private void _FocusTaskPane(IHydraTask task)
         {
-            var wnd = _FindPaneWindow<TaskPane>(pw => pw?.Task == task);
+            var wnd = _FindPane<TaskPane>(pw => pw?.Task == task);
             if (wnd != null)
                 wnd.IsActive = true;
         }
@@ -100,8 +131,8 @@ namespace StockSharp.Hydra
 
         private void _LoadPanes(SettingsStorage panesSettings)
         {
-            var settings = panesSettings.GetValue<String>("DockingLayout");
-            if (settings == null) return;
+            //var settings = panesSettings.GetValue<String>("DockingLayout");
+            //if (settings == null) return;
             //var serializer = new XmlLayoutSerializer(Docking);
             //serializer.Deserialize(new StringReader(settings));
         }
