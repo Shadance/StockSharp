@@ -33,7 +33,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -41,8 +41,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Prefer32Bit>true</Prefer32Bit>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <DocumentationFile>bin\Debug\Hydra.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -84,8 +85,6 @@
     <Reference Include="presentationframework.aero2" />
     <Reference Include="presentationframework.aerolite" />
     <Reference Include="PresentationFramework.Classic" />
-    <Reference Include="PresentationFramework.Luna" />
-    <Reference Include="PresentationFramework.Royale" />
     <Reference Include="ReachFramework" />
     <Reference Include="StockSharp.Algo.History">
       <HintPath>..\..\Algo.History\StockSharp.Algo.History.dll</HintPath>
@@ -186,6 +185,10 @@
     <Compile Include="Controls\ImportEnumMappingButton.xaml.cs">
       <DependentUpon>ImportEnumMappingButton.xaml</DependentUpon>
     </Compile>
+    <Compile Include="MainWindow_Docking.cs" />
+    <Compile Include="Panes\LogsPane.xaml.cs">
+      <DependentUpon>LogsPane.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Panes\CodePanel.xaml.cs">
       <DependentUpon>CodePanel.xaml</DependentUpon>
     </Compile>
@@ -226,9 +229,6 @@
       <DependentUpon>ImportPane.xaml</DependentUpon>
     </Compile>
     <Compile Include="Panes\IPane.cs" />
-    <Compile Include="Panes\PaneWindow.xaml.cs">
-      <DependentUpon>PaneWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Server\DummyRemoteStorageAuthorization.cs" />
     <Compile Include="UserConfig.cs" />
     <Compile Include="Panes\CandlesPane.xaml.cs">
@@ -296,6 +296,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ImportEnumMappingButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Panes\LogsPane.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -380,10 +384,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ExportProgress.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Panes\PaneWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -575,6 +575,10 @@
       <Project>{95ca16e0-0a47-43a3-aab7-7e0803e817ca}</Project>
       <Name>CorePublic</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Plugins\OpenECry\OpenECryPublic.csproj">
+      <Project>{1c9ffde4-1992-4bbb-be64-12923b80adf4}</Project>
+      <Name>OpenECryPublic</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Images\database.png" />
@@ -647,6 +651,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Images\human_add_folder_to_archive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\database_inactive.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

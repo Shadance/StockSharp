@@ -35,7 +35,7 @@ namespace StockSharp.Hydra.Controls
 			InitializeComponent();
 		}
 
-		public void EnableType(ExportTypes type, bool isEnabled)
+		public void SetTypeEnabled(ExportTypes type, bool isEnabled)
 		{
 			((ListBoxItem)ExportTypeCtrl.Items[(int)type]).IsEnabled = isEnabled;
 		}
@@ -93,7 +93,8 @@ namespace StockSharp.Hydra.Controls
 
 					return null;
 				}
-				case ExportTypes.Bin:
+				case ExportTypes.StockSharpBin:
+				case ExportTypes.StockSharpCsv:
 				{
 					var wndFolder = new VistaFolderBrowserDialog();
 

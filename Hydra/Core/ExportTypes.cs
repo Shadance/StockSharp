@@ -41,8 +41,13 @@ namespace StockSharp.Hydra.Core
 		Sql,
 
 		/// <summary>
-		/// В формат StockSharp.
+		/// В формат StockSharp (bin).
 		/// </summary>
-		Bin
+		StockSharpBin,
+
+		/// <summary>
+		/// В формат StockSharp (csv).
+		/// </summary>
+		StockSharpCsv,
 	}
 }

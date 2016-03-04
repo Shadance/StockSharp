@@ -16,7 +16,9 @@ Copyright 2010 by StockSharp, LLC
 
 using System.Collections;
 using System.Windows.Media;
+using Ecng.ComponentModel;
 using Fluent;
+using Xceed.Wpf.Toolkit;
 
 namespace StockSharp.Hydra
 {
@@ -36,15 +38,12 @@ namespace StockSharp.Hydra
 	using System.Windows.Threading;
 	using Timer = System.Timers.Timer;
 
-	//using ActiproSoftware.Windows.Controls.Docking;
-
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Configuration;
 	using Ecng.Xaml;
 	using Ecng.Net;
 	using Ecng.Serialization;
-	using Ecng.Data;
 	using Ecng.Interop;
 
 	using StockSharp.Logging;
@@ -66,17 +65,17 @@ namespace StockSharp.Hydra
 
 	public partial class MainWindow : RibbonWindow, ILogListener
 	{
-		public readonly static RoutedCommand OpenLogCommand = new RoutedCommand();
-		public readonly static RoutedCommand TargetPlatformCommand = new RoutedCommand();
-		public readonly static RoutedCommand HelpCommand = new RoutedCommand();
-		public readonly static RoutedCommand AboutCommand = new RoutedCommand();
-		public readonly static RoutedCommand LogDirectoryCommand = new RoutedCommand();
-		public readonly static RoutedCommand CopyToBufferCommand = new RoutedCommand();
-		public readonly static RoutedCommand OpenPaneCommand = new RoutedCommand();
-		public readonly static RoutedCommand ImportPaneCommand = new RoutedCommand();
-		public readonly static RoutedCommand BoardsCommand = new RoutedCommand();
-		public readonly static RoutedCommand AnalyticsCommand = new RoutedCommand();
-		public readonly static RoutedCommand MemoryStatisticsCommand = new RoutedCommand();
+		public static readonly RoutedCommand OpenLogCommand = new RoutedCommand();
+		public static readonly RoutedCommand TargetPlatformCommand = new RoutedCommand();
+		public static readonly RoutedCommand HelpCommand = new RoutedCommand();
+		public static readonly RoutedCommand AboutCommand = new RoutedCommand();
+		public static readonly RoutedCommand LogDirectoryCommand = new RoutedCommand();
+		public static readonly RoutedCommand CopyToBufferCommand = new RoutedCommand();
+		public static readonly RoutedCommand OpenPaneCommand = new RoutedCommand();
+		public static readonly RoutedCommand ImportPaneCommand = new RoutedCommand();
+		public static readonly RoutedCommand BoardsCommand = new RoutedCommand();
+		public static readonly RoutedCommand AnalyticsCommand = new RoutedCommand();
+		public static readonly RoutedCommand MemoryStatisticsCommand = new RoutedCommand();
 
 		private class HydraEmailLogListener : EmailLogListener
 		{
@@ -141,6 +140,8 @@ namespace StockSharp.Hydra
 
 		private DispatcherTimer _updateStatusTimer;
 
+		private readonly SessionClient _sessionClient = new SessionClient();
+
 		private TrayIcon _trayIcon;
 
 		public long LoadedTrades { get; private set; }
@@ -155,29 +156,20 @@ namespace StockSharp.Hydra
 
 		private bool _isReseting;
 		private string _dbFile;
-        private Security SelectedSecurity
-        {
-            get
-            {
-                //                var wnd = DockSite.ActiveWindow as PaneWindow;
-                var wnd = DockSite.Children.OfType<PaneWindow>().FirstOr(null);
-                if (wnd == null)
-                    return null;
-
-                var taskPane = wnd.Pane as TaskPane;
-
-                if (taskPane == null)
-                    return null;
-
-                var selectedSecurity = taskPane.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
-                return selectedSecurity == null ? null : selectedSecurity.TaskSecurity.Security;
-            }
-        }
-        public WindowState CurrentWindowState { get; set; }
+		private Security SelectedSecurity
+		{
+			get
+			{
+			    var wnd = _FindPane<TaskPane>(p => true);
+                var selectedSecurity = (wnd.Content as TaskPane)?.SelectedSecurities.FirstOrDefault(s => !s.TaskSecurity.Security.IsAllSecurity());
+                return selectedSecurity?.TaskSecurity.Security;
+			}
+		}
+		public WindowState CurrentWindowState { get; set; }
 
 		#region Dependency properties
 
-		public static readonly DependencyProperty HydraEntityRegistryProperty = DependencyProperty.Register("HydraEntityRegistry", typeof(HydraEntityRegistry), typeof(MainWindow));
+		public static readonly DependencyProperty HydraEntityRegistryProperty = DependencyProperty.Register(nameof(HydraEntityRegistry), typeof(HydraEntityRegistry), typeof(MainWindow));
 
 		public HydraEntityRegistry HydraEntityRegistry
 		{
@@ -185,7 +177,7 @@ namespace StockSharp.Hydra
 			set { SetValue(HydraEntityRegistryProperty, value); }
 		}
 
-		public static readonly DependencyProperty IsStartedProperty = DependencyProperty.Register("IsStarted", typeof(bool), typeof(MainWindow));
+		public static readonly DependencyProperty IsStartedProperty = DependencyProperty.Register(nameof(IsStarted), typeof(bool), typeof(MainWindow));
 
 		public bool IsStarted
 		{
@@ -205,7 +197,9 @@ namespace StockSharp.Hydra
 
 			InitializeComponent();
 
-			_logManager.Listeners.Add(new GuiLogListener(MonitorControl));
+
+            var logwnd = _FindPane<LogsPane>(w => true) ?? ShowPane(new LogsPane());            
+            _logManager.Listeners.Add(new GuiLogListener((logwnd.Content as LogsPane).MonitorControl));
 			_logManager.Listeners.Add(this);
 
 			_emailListener = new HydraEmailLogListener(this);
@@ -239,6 +233,8 @@ namespace StockSharp.Hydra
 
 		private void MainWindowLoaded(object sender, RoutedEventArgs e)
 		{
+			_sessionClient.CreateSession(Products.Hydra);
+
 			BusyIndicator.BusyContent = LocalizedStrings.Str2941;
 			BusyIndicator.IsBusy = true;
 
@@ -279,14 +275,14 @@ namespace StockSharp.Hydra
 
                 try
                 {
-                    Tasks.AddRange(res.Result);
+				Tasks.AddRange(res.Result);
                 }
                 catch (Exception ex)
                 {
                     ex.LogError();
                 }
 
-                var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
+				var collectionView = (AutoRefreshCollectionViewSource)FindResource("SortedSources");
 /*				if (collectionView != null)
 				{
 					var view = (ListCollectionView)collectionView.View;
@@ -336,7 +332,7 @@ namespace StockSharp.Hydra
 						AddTasks(newTasks);
 				}
 			}, TaskScheduler.FromCurrentSynchronizationContext());
-		}
+			}
 
 		private void InitializeDataSource()
 		{
@@ -390,13 +386,12 @@ namespace StockSharp.Hydra
 				}
 			}
 
+			_sessionClient.CloseSession();
+
 			if (!_isReseting)
 			{
-				if (_entityRegistry != null)
-				{
 					// если что-то еще не "сбросилось" в БД
-					_entityRegistry.DelayAction.WaitFlush();
-				}
+				_entityRegistry?.DelayAction.WaitFlush();
 
 				// сервис не будет зарегистрирован, если приложение закрыто было при старте из TargetPlatformWindow
 				if (ConfigManager.IsServiceRegistered<IStorageRegistry>())
@@ -406,19 +401,14 @@ namespace StockSharp.Hydra
 				}
 			}
 
-			if (_trayIcon != null)
-				_trayIcon.Close();
-
-			if (_host != null)
-				_host.Close();
-
-			if (_mutex != null)
-				_mutex.ReleaseMutex();
+			_trayIcon?.Close();
+			_host?.Close();
+			_mutex?.ReleaseMutex();
 
 			base.OnClosing(e);
 		}
 
-		private void CheckIsRunning()
+	    private void CheckIsRunning()
 		{
 			var settings = ConfigurationManager.ConnectionStrings;
 			var connectionStrings = (settings.Cast<ConnectionStringSettings>().Select(setting => setting.ConnectionString)).ToArray();
@@ -507,8 +497,7 @@ namespace StockSharp.Hydra
 			{
 				_timer.Stop();
 
-				if (_killTimer != null)
-					_killTimer.Stop();
+				_killTimer?.Stop();
 			}
 
 			if (_entityRegistry.Settings.AutoStop)
@@ -676,11 +665,20 @@ namespace StockSharp.Hydra
 		private void ExecutedOpenLogCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			ResetLogsImages();
-		    LogToolWindow.IsActive = true;
-            LogToolWindow.IsSelected = true;
+		    var wnd = _FindPane<LogsPane>(w => true);
+		    if (wnd == null)
+		    {
+                wnd = ShowPane(new LogsPane());
+                _logManager.Listeners.Add(new GuiLogListener((wnd.Content as LogsPane).MonitorControl));
+		    }
+		    else
+		    {
+                wnd.IsActive = true;
+                wnd.IsSelected = true;
+            }
         }
 
-        private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
+		private void ExecutedHelpCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			Process.Start("http://stocksharp.com/doc/html/a720a275-440a-44ce-86e2-bcec2e0bc55f.htm");
 		}
@@ -769,24 +767,11 @@ namespace StockSharp.Hydra
 					pane = new NewsPane();
 					break;
 
-                case "selected_task":
-                    var task = CurrentTools.SelectedItem;
+                case "task":
+			        var lvi = e.OriginalSource as System.Windows.Controls.ListViewItem;
+                    var task = lvi?.DataContext as IHydraTask;
 			        if (task != null)
-			        {
-			            if (task.GetType() != typeof (IHydraTask))
-			                throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
-			            pane = EnsureTaskPane((IHydraTask) task);
-			        }
-			        break;
-
-                case "selected_source":
-                    task = CurrentSources.SelectedItem;
-			        if (task != null)
-			        {
-                        if (task.GetType() != typeof(IHydraTask))
-                            throw new Exception("CurrentToos.SelectedItem.Type != IHydraTask");
-                        pane = EnsureTaskPane((IHydraTask) task);
-			        }
+    	                pane = EnsureTaskPane((IHydraTask) task);
 			        break;
 
 				case "transaction":
@@ -794,24 +779,14 @@ namespace StockSharp.Hydra
 					break;
 					
 				case "security":
-//                    var wnd = DockSite.DocumentWindows.FirstOrDefault(w =>
-                    var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-					{
-						var paneWnd = w as PaneWindow;
-
-						if (paneWnd == null)
-							return false;
-
-						return paneWnd.Pane is AllSecuritiesPane;
-					});
-
-			        if (wnd != null)
-			        {
+			        var wnd = _FindPane<AllSecuritiesPane>(p => true);
+					if (wnd != null)
                         wnd.IsActive = true;
-                    }
-                    else
+					else
 						pane = new AllSecuritiesPane();
 					break;
+                default:
+                        throw new Exception("ExecutedOpenPaneCommand with unsupported parameter: " + e.Parameter.ToString());
 			}
 
 			if (pane == null)
@@ -868,25 +843,14 @@ namespace StockSharp.Hydra
 					throw new ArgumentOutOfRangeException(nameof(e), param, LocalizedStrings.Str1655);
 			}
 
-			var importWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-			{
-				var pw = w as PaneWindow;
+		    var importWnd =
+                _FindPane<ImportPane>(
+		            importPane => importPane?.DataType == dataType && importPane?.ExecutionType == execType);
 
-				if (pw == null)
-					return false;
-
-				var importPane = pw.Pane as ImportPane;
-
-				if (importPane == null)
-					return false;
-
-				return importPane.DataType == dataType && importPane.ExecutionType == execType;
-			});
-
-		    if (importWnd != null)
+			if (importWnd != null)
 		        importWnd.IsActive = true;
 
-		    else
+			else
 		        ShowPane(new ImportPane {ExecutionType = execType, DataType = dataType});
 		}
 
@@ -954,17 +918,8 @@ namespace StockSharp.Hydra
 
 		private void ExecutedBoardsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var wnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-			{
-				var paneWnd = w as PaneWindow;
-
-				if (paneWnd == null)
-					return false;
-
-				return paneWnd.Pane is ExchangeBoardPane;
-			});
-
-			if (wnd != null)
+		    var wnd = _FindPane<ExchangeBoardPane>(p => true);
+            if (wnd != null)
 				wnd.IsActive = true;
 			else
 				ShowPane(new ExchangeBoardPane());
@@ -973,16 +928,6 @@ namespace StockSharp.Hydra
 		private void ExecutedAnalyticsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
 			ShowPane(new AnalyticsPane());
-		}
-
-		public void ShowPane(IPane pane)
-		{
-			if (pane == null)
-				throw new ArgumentNullException(nameof(pane));
-
-			var wnd = new PaneWindow { Pane = pane };
-            DockSite.Children.Add(wnd);
-			wnd.IsActive = true;
 		}
 
 		private void ExecutedMemoryStatisticsCommand(object sender, ExecutedRoutedEventArgs e)
@@ -1028,75 +973,96 @@ namespace StockSharp.Hydra
 			}
 		}
 
-		void IPersistable.Load(SettingsStorage storage)
+		public void Load(SettingsStorage settings)
 		{
+		    Height = settings.GetValue<double>(nameof(Height));
+		    Width = settings.GetValue<double>(nameof(Width));
+            this.SetLocation(settings.GetValue<Point<int>>("Location"));
+		    WindowState = settings.GetValue<WindowState>(nameof(WindowState));
+
+            var navBar = settings.GetValue<SettingsStorage>("navBar");
+
+            int? idx = null;
+            idx = navBar.GetValue<int?>("SelectedSource");
+            if (idx.HasValue && CurrentSources.Items.Count > idx)
+                CurrentSources.SelectedIndex = idx.Value;
+
+            idx = navBar.GetValue<int?>("SelectedTool") ?? navBar.GetValue<int?>("SelectedConverter");
+            if (idx.HasValue && CurrentTools.Items.Count > idx)
+                CurrentTools.SelectedIndex = idx.Value;
+            
+            var panes = settings.GetValue<SettingsStorage>("Panes");
+            _LoadPanes(panes);
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+        public void Save(SettingsStorage settings)
 		{
-		}
+            settings.SetValue(nameof(Width), Width);
+            settings.SetValue(nameof(Height), Height);
+            settings.SetValue("Location", this.GetLocation());
+            settings.SetValue(nameof(WindowState), WindowState);
 
-/*		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
-		{
-			var paneWnd = e.Window as PaneWindow;
+            var navBar = new SettingsStorage();
+            navBar.SetValue("SelectedSource",   CurrentSources.SelectedIndex);
+            navBar.SetValue("SelectedTool",     CurrentTools.SelectedIndex);
+            settings.SetValue("navBar", navBar);
+            settings.SetValue("Panes", _SavePanes());
+        }
 
-			if (paneWnd == null)
-				return;
+        /*		private void DockSite_OnWindowClosing(object sender, DockingWindowEventArgs e)
+                {
+                    var paneWnd = e.Window as PaneWindow;
 
-			if (paneWnd.Pane == null)
-				return;
+                    paneWnd?.Pane?.Dispose();
 
-			paneWnd.Pane.Dispose();
+                    //if (!paneWnd.Pane.InProcess)
+                    //	return;
 
-			//if (!paneWnd.Pane.InProcess)
-			//	return;
+                    //new MessageBoxBuilder()
+                    //	.Text("Закладка '{0}' в процессе работы и ее невозможно закрыть.".Put(paneWnd.Pane.Title))
+                    //	.Warning()
+                    //	.Owner(this)
+                    //	.Show();
 
-			//new MessageBoxBuilder()
-			//	.Text("Закладка '{0}' в процессе работы и ее невозможно закрыть.".Put(paneWnd.Pane.Title))
-			//	.Warning()
-			//	.Owner(this)
-			//	.Show();
+                    //e.Cancel = true;
+                }
 
-			//e.Cancel = true;
-		}
+                private void DockSite_OnWindowClosed(object sender, DockingWindowEventArgs e)
+                {
+                    if (e.Window.Name == "LogToolWindow")
+                        return;
 
-		private void DockSite_OnWindowClosed(object sender, DockingWindowEventArgs e)
-		{
-			if (e.Window.Name == "LogToolWindow")
-				return;
+                    DockSite.Children.Remove((DocumentWindow)e.Window);
+                }*/
 
-			DockSite.Children.Remove((DocumentWindow)e.Window);
-		}*/
+        /*		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
+                {
+                    var wnd = e.Window as PaneWindow;
 
-/*		private void DockSite_OnWindowActivated(object sender, DockingWindowEventArgs e)
-		{
-			var wnd = e.Window as PaneWindow;
+                    var taskPane = wnd?.Pane as TaskPane;
 
-			if (wnd == null) 
-				return;
+                    if (taskPane == null)
+                        return;
 
-			var taskPane = wnd.Pane as TaskPane;
+                    var task = taskPane.Task;
 
-			if (taskPane == null)
-				return;
+                    var lv = task.IsCategoryOf(TaskCategories.Tool) ? CurrentTools : CurrentSources;
 
-			var task = taskPane.Task;
-
-			var lv = task.IsCategoryOf(TaskCategories.Tool) ? CurrentTools : CurrentSources;
-
-			lv.ScrollIntoView(task);
-			lv.SelectedItem = task;
-		}
-*/
-		private void ProxySettings_Click(object sender, RoutedEventArgs e)
+                    lv.ScrollIntoView(task);
+                    lv.SelectedItem = task;
+                }
+        */
+        private void ProxySettings_Click(object sender, RoutedEventArgs e)
 		{
 			BaseApplication.EditProxySettings(this);
 		}
 
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
-            _emailListener.Dispose();
-
+            _emailListener.DoDispose();
+            _killTimer.DoDispose();
+            _sessionClient.DoDispose();
+            _host.DoDispose();
 		}
 
  /*       private void CurrentTasks_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -1104,12 +1070,6 @@ namespace StockSharp.Hydra
 
         }
 */
-
-        private void ZoomSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            var textFormattingMode = e.NewValue > 1.0 || Math.Abs(e.NewValue - 1.0) < double.Epsilon ? TextFormattingMode.Ideal : TextFormattingMode.Display;
-            TextOptions.SetTextFormattingMode(this, textFormattingMode);
-        }
-
-    }
+ 
+	}
 }

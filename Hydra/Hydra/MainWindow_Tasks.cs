@@ -13,6 +13,10 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
+using System.Runtime.InteropServices;
+using StockSharp.Hydra.Properties;
+
 namespace StockSharp.Hydra
 {
 	using System;
@@ -46,7 +50,7 @@ namespace StockSharp.Hydra
 	using StockSharp.Messages;
 	using StockSharp.Localization;
 
-	partial class MainWindow
+	public partial class MainWindow
 	{
 		private sealed class LanguageSorter : IComparer
 		{
@@ -95,15 +99,15 @@ namespace StockSharp.Hydra
 			}
 		}
 
-		public readonly static RoutedCommand TaskEnabledChangedCommand = new RoutedCommand();
-		public readonly static RoutedCommand RemoveTaskCommand = new RoutedCommand();
-		public readonly static RoutedCommand EditTaskSettingsCommand = new RoutedCommand();
-		public readonly static RoutedCommand AddSourcesCommand = new RoutedCommand();
-		public readonly static RoutedCommand AddToolsCommand = new RoutedCommand();
+		public static readonly RoutedCommand TaskEnabledChangedCommand = new RoutedCommand();
+		public static readonly RoutedCommand RemoveTaskCommand = new RoutedCommand();
+		public static readonly RoutedCommand EditTaskSettingsCommand = new RoutedCommand();
+		public static readonly RoutedCommand AddSourcesCommand = new RoutedCommand();
+		public static readonly RoutedCommand AddToolsCommand = new RoutedCommand();
 
 		private readonly List<Type> _availableTasks = new List<Type>();
 
-		public static readonly DependencyProperty TasksProperty = DependencyProperty.Register("Tasks", typeof(IList<IHydraTask>), typeof(MainWindow), new PropertyMetadata(new ObservableCollection<IHydraTask>()));
+		public static readonly DependencyProperty TasksProperty = DependencyProperty.Register(nameof(Tasks), typeof(IList<IHydraTask>), typeof(MainWindow), new PropertyMetadata(new ObservableCollection<IHydraTask>()));
 
 		public IList<IHydraTask> Tasks
 		{
@@ -329,17 +333,10 @@ namespace StockSharp.Hydra
 				{
 					if (res)
 					{
-						var wnd = DockSite.Children
-							.OfType<PaneWindow>()
-							.Where(w => w.Pane is TaskPane)
-							.FirstOrDefault(w => ((TaskPane)w.Pane).Task == task);
-
-						wnd?.Close();
-
+                        var wnd = _FindPane<TaskPane>(pane => pane.Task == task);
+						if (wnd != null)
+                            wnd.Close();
 						Tasks.Remove(task);
-
-						//if (!Tasks.Any())
-						//	btnSource.IsEnabled = false;
 					}
 
 					BusyIndicator.IsBusy = false;
@@ -350,8 +347,12 @@ namespace StockSharp.Hydra
 		{
 			if (IsStarted)
 			{
-				var lv = (ListView)e.Source;
-				e.CanExecute = lv.SelectedItem != null && !((IHydraTask)lv.SelectedItem).Settings.IsEnabled;
+                if (e.Parameter.GetType() != typeof(ListViewItem))
+                    throw new Exception("ExecutedEditTaskSettingsCommand with Paremeter type != ListViewItem");
+
+			    var lvi = e.Parameter as ListViewItem;
+                var task = lvi.DataContext as IHydraTask;
+				e.CanExecute = (task != null) && (task.Settings.IsEnabled);
 			}
 			else
 			{
@@ -386,8 +387,12 @@ namespace StockSharp.Hydra
 		{
 			if (IsStarted)
 			{
-				var lv = (ListView)e.Source;
-				e.CanExecute = lv.SelectedItem != null && !((IHydraTask)lv.SelectedItem).Settings.IsEnabled;
+                if (e.Parameter.GetType() != typeof(ListViewItem))
+                    throw new Exception("ExecutedEditTaskSettingsCommand with Paremeter type != ListViewItem");
+
+                var task = (e.Parameter as ListViewItem).DataContext as IHydraTask;
+                e.CanExecute = (task != null) && (task.Settings.IsEnabled);
+
 			}
 			else
 			{
@@ -397,22 +402,28 @@ namespace StockSharp.Hydra
 
 		private void ExecutedAddSourcesCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var wnd = new SourcesWindow { AvailableTasks = _availableTasks.Where(t => !t.IsCategoryOf(TaskCategories.Tool)).ToArray() };
+            LayoutAnchorableSources.IsActive = true;
+            LayoutAnchorableSources.Show();
+
+            var wnd = new SourcesWindow { AvailableTasks = _availableTasks.Where(t => !t.IsCategoryOf(TaskCategories.Tool)).ToArray() };
 
 			if (!wnd.ShowModal(this))
 				return;
 
-			AddTasks(wnd.SelectedTasks);
+            AddTasks(wnd.SelectedTasks);
 		}
 
 		private void ExecutedAddToolsCommand(object sender, ExecutedRoutedEventArgs e)
 		{
-			var wnd = new ToolsWindow { AvailableTasks = _availableTasks.Where(t => t.IsCategoryOf(TaskCategories.Tool)).ToArray() };
+		    LayoutAnchorableTasks.IsActive = true;
+            LayoutAnchorableTasks.Show();
+
+            var wnd = new ToolsWindow { AvailableTasks = _availableTasks.Where(t => t.IsCategoryOf(TaskCategories.Tool)).ToArray() };
 
 			if (!wnd.ShowModal(this))
 				return;
 
-			AddTasks(wnd.SelectedTasks);
+            AddTasks(wnd.SelectedTasks);
 		}
 
 		private void AddTasks(IEnumerable<Type> taskTypes)
@@ -491,32 +502,6 @@ namespace StockSharp.Hydra
 				});
 		}
 
-		private TaskPane EnsureTaskPane(IHydraTask task)
-		{
-			var taskWnd = DockSite.Children.OfType<PaneWindow>().FirstOrDefault(w =>
-			{
-				var pw = w as PaneWindow;
-
-				if (pw == null)
-					return false;
-
-				var taskPane = pw.Pane as TaskPane;
-
-				if (taskPane == null)
-					return false;
-
-				return taskPane.Task == task;
-			});
-
-			if (taskWnd != null)
-			{
-				taskWnd.IsActive = true;
-				return null;
-			}
-			else
-				return new TaskPane { Task = task };
-		}
-
 		private void ExecutedTaskEnabledChangedCommand(object sender, ExecutedRoutedEventArgs e)
 		{
             if (e.Parameter.GetType() != typeof(ListViewItem))
@@ -538,18 +523,17 @@ namespace StockSharp.Hydra
 				OpenPaneCommand.Execute("Task", null);
 
 				//настройки не были сохранены - необходимо выключить задачу
-				if (task.Settings.IsDefault)
-				{
-					var checkBox = e.OriginalSource as CheckBox;
-					if (checkBox != null)
-						checkBox.IsChecked = false;
+			    if (!task.Settings.IsDefault) return;
 
-					new MessageBoxBuilder()
-						.Text(LocalizedStrings.Str2905)
-						.Warning()
-						.Owner(this)
-						.Show();
-				}
+                var checkBox = e.OriginalSource as CheckBox;
+				if (checkBox != null)
+					checkBox.IsChecked = false;
+
+				new MessageBoxBuilder()
+					.Text(LocalizedStrings.Str2905)
+					.Warning()
+					.Owner(this)
+					.Show();
 			}
 			else
 				task.SaveSettings();
@@ -702,15 +686,14 @@ namespace StockSharp.Hydra
 
 		private void CurrentTasks_OnSelectionChanged(object sender, EventArgs eventArgs)
 		{
-			var item = ((ListView)sender).SelectedItem;
-
-			var wnd = DockSite.Children.OfType<PaneWindow>().SingleOrDefault(w => w.Pane == item);
-
-			if (wnd != null)
-				wnd.IsActive = true;
+			var lvi = ((ListView)sender).SelectedItem as ListViewItem;
+		    if (lvi.IsNull()) return;
+		    var task = lvi.DataContext as IHydraTask;
+		    if (task.IsNull()) return;
+		    _FocusTaskPane(task);
 		}
 
-		private void CurrentTasks_OnSelectionItemDoubleClick(object sender, MouseButtonEventArgs e)
+        private void CurrentTasks_OnSelectionItemDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			OpenPaneCommand.Execute("Task", null);
 		}

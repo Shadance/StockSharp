@@ -200,7 +200,7 @@ namespace StockSharp.Hydra.Panes
 					.ToReferences();	
 			}
 
-			CodePanel.References.AddRange(_refs);
+			CodePanel.References?.AddRange(_refs);
 
 			Templates.ItemsSource = new[]
 			{

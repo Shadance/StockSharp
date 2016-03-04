@@ -13,18 +13,22 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
+using System.Windows.Controls;
+
 namespace StockSharp.Hydra.Panes
 {
-	using System;
+    using System;
 
-	using Ecng.Serialization;
+    using Ecng.Serialization;
 
-	public interface IPane : IPersistable, IDisposable
-	{
-		string Title { get; }
+    public interface IPane : IPersistable, IDisposable
+    {
+        string Title { get; }
 
-		Uri Icon { get; }
+        Uri Icon { get; }
 
-		bool IsValid { get; }
-	}
+        bool IsValid { get; }
+
+    }
 }

@@ -16,22 +16,21 @@ Copyright 2010 by StockSharp, LLC
 namespace StockSharp.Hydra.Controls
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Diagnostics;
 	using System.IO;
-	using System.Linq;
 	using System.Threading;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Threading;
 
-	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Configuration;
 	using Ecng.Xaml;
 	using Ecng.Xaml.Database;
 
-	using StockSharp.Algo;
 	using StockSharp.Algo.Export;
 	using StockSharp.Algo.Storages;
 	using StockSharp.BusinessEntities;
@@ -67,7 +66,7 @@ namespace StockSharp.Hydra.Controls
 			_mainGrid = mainGrid;
 		}
 
-		public void Start(Security security, Type dataType, object arg, IEnumerableEx values, object path)
+		public void Start(Security security, Type dataType, object arg, IEnumerable values, int valuesCount, object path)
 		{
 			if (dataType == null)
 				throw new ArgumentNullException(nameof(dataType));
@@ -80,10 +79,23 @@ namespace StockSharp.Hydra.Controls
 
 			var currProgress = 5;
 
-			var valuesPerPercent = (values.Count / (100 - currProgress)).Max(1);
-			var valuesPerCount = (valuesPerPercent / 10).Max(1);
-			var currCount = 0;
-			var valuesCount = 0;
+			var valuesPerPercent = (valuesCount / (100 - currProgress)).Max(1);
+			//var valuesPerCount = (valuesPerPercent / 10).Max(1);
+			//var currCount = 0;
+			var valuesProcessed = 0;
+			var prevValuesProcessed = 0;
+
+			var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+			timer.Tick += (sender, args) =>
+			{
+				var v = valuesProcessed;
+
+				if (prevValuesProcessed >= v)
+					return;
+
+				UpdateCount(v);
+				prevValuesProcessed = v;
+			};
 
 			Func<int, bool> isCancelled = count =>
 			{
@@ -91,19 +103,19 @@ namespace StockSharp.Hydra.Controls
 
 				if (!isCancelling)
 				{
-					valuesCount += count;
+					valuesProcessed += count;
 
-					if (valuesCount / valuesPerPercent > currProgress)
+					if (valuesProcessed / valuesPerPercent > currProgress)
 					{
-						currProgress = valuesCount / valuesPerPercent;
+						currProgress = valuesProcessed / valuesPerPercent;
 						_worker.ReportProgress(currProgress);
 					}
 
-					if (valuesCount > currCount)
-					{
-						currCount = valuesCount + valuesPerCount;
-						this.GuiAsync(() => UpdateCount(valuesCount));
-					}
+					//if (valuesProcessed > currCount)
+					//{
+					//	currCount = valuesProcessed + valuesPerCount;
+					//	this.GuiAsync(() => UpdateCount(valuesProcessed));
+					//}
 				}
 
 				return isCancelling;
@@ -208,22 +220,32 @@ namespace StockSharp.Hydra.Controls
 					fileName = null;
 					exporter = new DatabaseExporter(security, arg, isCancelled, (DatabaseConnectionPair)path) { CheckUnique = false };
 					break;
-				case ExportTypes.Bin:
+				case ExportTypes.StockSharpBin:
+				case ExportTypes.StockSharpCsv:
 					var drive = (IMarketDataDrive)path;
 					fileName = drive is LocalMarketDataDrive ? drive.Path : null;
-					exporter = new BinExporter(security, arg, isCancelled, drive);
+					exporter = new StockSharpExporter(security, arg, isCancelled, drive, _button.ExportType == ExportTypes.StockSharpBin ? StorageFormats.Binary : StorageFormats.Csv);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
 
-			CreateWorker(values.Count, fileName);
+			CreateWorker(valuesCount, fileName);
 
 			_worker.DoWork += (s, e) =>
 			{
 				_worker.ReportProgress(currProgress);
 
-				exporter.Export(dataType, values);
+				timer.Start();
+
+				try
+				{
+					exporter.Export(dataType, values);
+				}
+				finally
+				{
+					timer.Stop();
+				}
 
 				_worker.ReportProgress(100);
 				Thread.Sleep(500);
@@ -233,74 +255,62 @@ namespace StockSharp.Hydra.Controls
 			_worker.RunWorkerAsync();
 		}
 
-		public void Start(IMarketDataDrive destDrive, DateTime? startDate, DateTime? endDate, Security security, IMarketDataDrive sourceDrive, StorageFormats format, Type dataType, object arg)
+		public void Start(SecurityId securityId, DateTime[] datesToExport, LocalMarketDataDrive sourceDrive, LocalMarketDataDrive destDrive, string fileName)
 		{
-			CreateWorker(0, null);
+			if (securityId.IsDefault())
+				throw new ArgumentNullException(nameof(securityId));
+
+			if (datesToExport == null)
+				throw new ArgumentNullException(nameof(datesToExport));
+
+			if (sourceDrive == null)
+				throw new ArgumentNullException(nameof(sourceDrive));
+
+			if (destDrive == null)
+				throw new ArgumentNullException(nameof(destDrive));
+
+			if (fileName.IsEmpty())
+				throw new ArgumentNullException(nameof(fileName));
+
+			CreateWorker(datesToExport.Length, destDrive.Path);
 
 			_worker.DoWork += (s, e) =>
 			{
-				var storageRegistry = ConfigManager.GetService<IStorageRegistry>();
-				var storage = storageRegistry.GetStorage(security, dataType, arg, sourceDrive, format);
-
 				try
 				{
-					var dates = storage.Dates.ToArray();
-
-					if (dates.IsEmpty())
-						return;
-
-					var allDates = (startDate ?? dates.First()).Range((endDate ?? dates.Last()), TimeSpan.FromDays(1));
-
-					var datesToExport = storage.Dates
-						.Intersect(allDates)
-						.Select(d =>
-						{
-							int count;
-
-							if (dataType == typeof(ExecutionMessage))
-								count = ((IMarketDataStorage<ExecutionMessage>)storage).Load(d).Count;
-							else if (dataType == typeof(QuoteChangeMessage))
-								count = ((IMarketDataStorage<QuoteChangeMessage>)storage).Load(d).Count;
-							else if (dataType == typeof(Level1ChangeMessage))
-								count = ((IMarketDataStorage<Level1ChangeMessage>)storage).Load(d).Count;
-							else if (dataType.IsCandleMessage())
-								count = ((IMarketDataStorage<CandleMessage>)storage).Load(d).Count;
-							else
-								throw new NotSupportedException(LocalizedStrings.Str2872Params.Put(dataType.Name));
-
-							return Tuple.Create(d, count);
-						})
-						.ToArray();
-
 					_worker.ReportProgress(0);
 
 					var currentValuesCount = 0;
-					var totalValuesCount = datesToExport.Select(d => d.Item2).Sum();
+					//var totalValuesCount = datesToExport.Select(d => d.Item2).Sum();
 
 					if (!Directory.Exists(destDrive.Path))
 						Directory.CreateDirectory(destDrive.Path);
 
-					var dataPath = ((LocalMarketDataDrive)sourceDrive).GetSecurityPath(security.ToSecurityId());
-					var fileName = LocalMarketDataDrive.GetFileName(dataType, arg) + LocalMarketDataDrive.GetExtension(StorageFormats.Binary);
+					var sourceSecPath = sourceDrive.GetSecurityPath(securityId);
+					var destSecPath = destDrive.GetSecurityPath(securityId);
 
 					foreach (var date in datesToExport)
 					{
-						var d = date.Item1.ToString("yyyy_MM_dd");
-						var file = Path.Combine(dataPath, d, fileName);
+						var dateStr = LocalMarketDataDrive.GetDirName(date);
 
-						if (File.Exists(file))
+						var sourceFile = Path.Combine(sourceSecPath, dateStr, fileName);
+
+						if (File.Exists(sourceFile))
 						{
-							if (!Directory.Exists(Path.Combine(destDrive.Path, d)))
-								Directory.CreateDirectory(Path.Combine(destDrive.Path, d));
+							var destPath = Path.Combine(destSecPath, dateStr);
+							var destFile = Path.Combine(destPath, fileName);
 
-							File.Copy(file, Path.Combine(destDrive.Path, d, Path.GetFileName(file)), true);
+							if (!Directory.Exists(destPath))
+								Directory.CreateDirectory(destPath);
+
+							File.Copy(sourceFile, destFile, true);
 						}
 
-						if (date.Item2 == 0)
-							continue;
+						//if (date.Item2 == 0)
+						//	continue;
 
-						currentValuesCount += date.Item2;
-						_worker.ReportProgress((int)Math.Round(currentValuesCount * 100m / totalValuesCount));
+						currentValuesCount++;
+						_worker.ReportProgress((int)Math.Round(currentValuesCount * 100m / datesToExport.Length));
 						this.GuiAsync(() => UpdateCount(currentValuesCount));
 					}
 				}
@@ -372,12 +382,12 @@ namespace StockSharp.Hydra.Controls
 			ProgressBarPanel.Visibility = Visibility.Collapsed;
 		}
 
-		public void TooManyValues()
+		private void TooManyValues()
 		{
 			UpdateStatus(LocalizedStrings.Str2911);
 		}
 
-		public void UpdateCount(int count)
+		private void UpdateCount(int count)
 		{
 			ProgressText.Text = LocalizedStrings.Str2912Params.Put(count, _totalCount);
 
@@ -398,9 +408,9 @@ namespace StockSharp.Hydra.Controls
 			ProgressBarPanel.Visibility = Visibility.Collapsed;
 		}
 
-		public void Load<T>(IEnumerableEx<T> source, Action<IEnumerable<T>> addValues, int maxValueCount, Action<T> itemLoaded = null)
+		public void Load<T>(IEnumerable<T> source, Action<IEnumerable<T>> addValues, int maxValueCount, Action<T> itemLoaded = null)
 		{
-			CreateWorker(source.Count, null);
+			CreateWorker(maxValueCount, null);
 
 			_worker.DoWork += (sender, args) =>
 			{
